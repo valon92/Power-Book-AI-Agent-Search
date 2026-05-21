@@ -111,6 +111,30 @@ OPENAI_ENABLED=true
 Get keys at [platform.openai.com/api-keys](https://platform.openai.com/api-keys).  
 If the key is missing or the API fails, the app falls back to the rule-based parser automatically.
 
+## eBay Browse API (real listings)
+
+Register at [developer.ebay.com](https://developer.ebay.com/) and create **Production** (or Sandbox) keys.
+
+```env
+EBAY_CLIENT_ID=your-app-id
+EBAY_CLIENT_SECRET=your-cert-id
+EBAY_MARKETPLACE_ID=EBAY_DE
+EBAY_SANDBOX=false
+EBAY_ENABLED=true
+```
+
+API used: `GET /buy/browse/v1/item_summary/search?q=...`
+
+When configured, **eBay returns live listings**; other sources stay mock until integrated.
+
+Test:
+```bash
+php artisan config:clear
+curl -s -X POST http://127.0.0.1:8765/api/search \
+  -H "Content-Type: application/json" \
+  -d '{"q":"laptop gaming"}' | python3 -c "import sys,json; d=json.load(sys.stdin); print([r['source'] for r in d['results'][:5]])"
+```
+
 ## Plugging in real marketplaces
 
 1. Create `app/Services/Marketplace/MobileDeService.php` implementing `MarketplaceSearchInterface`

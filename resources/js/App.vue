@@ -10,6 +10,7 @@
       </router-view>
     </main>
     <AppFooter />
+    <ScrollToTop />
   </div>
 </template>
 
@@ -17,6 +18,7 @@
 import AnimatedBackground from './components/AnimatedBackground.vue';
 import AppHeader from './components/AppHeader.vue';
 import AppFooter from './components/AppFooter.vue';
+import ScrollToTop from './components/ScrollToTop.vue';
 </script>
 
 <style>

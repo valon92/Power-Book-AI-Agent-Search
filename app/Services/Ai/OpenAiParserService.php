@@ -2,6 +2,7 @@
 
 namespace App\Services\Ai;
 
+use App\Support\SearchLocale;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -13,7 +14,7 @@ class OpenAiParserService
     /**
      * @return array<string, mixed>
      */
-    public function parse(string $query, ?string $country = null): array
+    public function parse(string $query, ?string $country = null, ?string $locale = 'en'): array
     {
         $apiKey = config('openai.api_key');
         if (! $apiKey) {
@@ -27,8 +28,8 @@ class OpenAiParserService
                 'temperature' => 0.2,
                 'response_format' => ['type' => 'json_object'],
                 'messages' => [
-                    ['role' => 'system', 'content' => $this->systemPrompt()],
-                    ['role' => 'user', 'content' => $this->userPrompt($query, $country)],
+                    ['role' => 'system', 'content' => $this->systemPrompt($locale)],
+                    ['role' => 'user', 'content' => $this->userPrompt($query, $country, $locale)],
                 ],
             ]);
 
@@ -58,14 +59,17 @@ class OpenAiParserService
         return $this->normalize($decoded, $query, $country);
     }
 
-    private function systemPrompt(): string
+    private function systemPrompt(?string $locale = 'en'): string
     {
-        return <<<'PROMPT'
+        $lang = SearchLocale::descriptionLanguage($locale);
+
+        return <<<PROMPT
 You are Powerbook.ai shopping intent parser. Convert natural language product search queries into structured JSON.
 
 Return ONLY valid JSON with this shape:
 {
   "category": "car|book|painting|electronics|furniture|collectibles|fashion|real_estate|luxury|gift|marketplace",
+  "description": "one-sentence buyer-facing summary in {$lang}",
   "keywords": ["word1", "word2"],
   "language_hint": "en|sq|de|fr|it|es",
   "brand": null,
@@ -93,16 +97,18 @@ Rules:
 - year: integer if mentioned
 - keywords: 3-8 relevant terms, lowercase
 - language_hint: detect from query (Albanian => sq)
+- description: always in {$lang} when provided
 - Omit null fields or use null explicitly
 - features: array of strings e.g. long_battery, quiet_cooling, gaming
 PROMPT;
     }
 
-    private function userPrompt(string $query, ?string $country): string
+    private function userPrompt(string $query, ?string $country, ?string $locale = 'en'): string
     {
         $ctx = $country ? "User country hint: {$country}." : '';
+        $uiLocale = SearchLocale::normalize($locale);
 
-        return "{$ctx}\nQuery: {$query}";
+        return "{$ctx}\nUI locale: {$uiLocale}\nQuery: {$query}";
     }
 
     /**
@@ -131,7 +137,7 @@ PROMPT;
         ];
 
         $optional = [
-            'brand', 'model', 'year', 'color', 'max_km', 'transmission', 'fuel',
+            'description', 'brand', 'model', 'year', 'color', 'max_km', 'transmission', 'fuel',
             'genre', 'product_type', 'features', 'max_price', 'condition',
             'style', 'room', 'subject', 'bedrooms', 'listing_type', 'length', 'ending', 'item',
         ];

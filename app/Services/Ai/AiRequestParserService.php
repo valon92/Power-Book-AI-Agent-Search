@@ -28,11 +28,11 @@ class AiRequestParserService
     /**
      * @return array<string, mixed>
      */
-    public function parse(string $query, ?string $country = null): array
+    public function parse(string $query, ?string $country = null, ?string $locale = 'en'): array
     {
         if ($this->shouldUseOpenAi()) {
             try {
-                return $this->openAi->parse($query, $country);
+                return $this->openAi->parse($query, $country, $locale);
             } catch (\Throwable $e) {
                 Log::warning('OpenAI parser fallback to rules', ['error' => $e->getMessage()]);
             }

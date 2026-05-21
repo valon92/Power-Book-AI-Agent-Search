@@ -53,6 +53,7 @@ class MockMarketplaceService implements MarketplaceSearchInterface
             $item['source_key'] = $this->source;
             $item['affiliate_ready'] = true;
             $item['sponsored'] = (bool) ($item['sponsored'] ?? false);
+            $item['live'] = false;
 
             return $item;
         }, $dataset);

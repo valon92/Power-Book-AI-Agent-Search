@@ -128,12 +128,14 @@ class GeoLocationService
      */
     private function fallback(): array
     {
+        $city = env('POWERBOOK_DEFAULT_CITY', 'Ferizaj');
+
         return [
             'ip' => request()->ip(),
             'country' => 'Kosovo',
             'country_code' => 'XK',
             'region' => 'Pristina',
-            'city' => 'Pristina',
+            'city' => $city,
             'latitude' => 42.6629,
             'longitude' => 21.1655,
             'locale' => 'sq',

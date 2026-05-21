@@ -20,6 +20,7 @@
 <script setup>
 import { ref, inject } from 'vue';
 import { useRouter } from 'vue-router';
+import api from '../services/api';
 import BrandLogoIcon from '../components/BrandLogoIcon.vue';
 import SearchInput from '../components/SearchInput.vue';
 import ExamplePrompts from '../components/ExamplePrompts.vue';
@@ -30,16 +31,29 @@ const { tagline, locale } = inject('i18n');
 const query = ref('');
 const loading = ref(false);
 
-function goSearch(q) {
+function goSearch(payload) {
+  const text = typeof payload === 'string' ? payload : (payload?.query || '');
+  const image = typeof payload === 'object' ? payload?.imageBase64 : null;
+
+  api.saveSearchImage(image);
   loading.value = true;
+
+  const scope = typeof payload === 'object' ? (payload?.locationScope || api.getLocationScope()) : api.getLocationScope();
+
   router.push({
     name: 'search',
-    query: { q, locale: locale.value },
+    query: {
+      q: text || (image ? 'visual product search' : ''),
+      locale: locale.value,
+      has_image: image ? '1' : '0',
+      scope,
+    },
   });
 }
 
 function onExample(text) {
   query.value = text;
-  goSearch(text);
+  api.clearSearchImage();
+  goSearch({ query: text, imageBase64: null });
 }
 </script>

@@ -14,10 +14,23 @@ class SearchController extends Controller
     public function search(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'q' => 'required|string|min:3|max:500',
+            'q' => 'nullable|string|max:500',
+            'image' => 'nullable|string|max:12000000',
             'locale' => 'nullable|string|in:en,sq',
+            'location_scope' => 'nullable|string|in:auto,city,local,country,region,world,universal,global',
             'filters' => 'nullable',
         ]);
+
+        $query = trim($validated['q'] ?? '');
+        $image = $validated['image'] ?? null;
+
+        if ($image && str_contains($image, 'base64,')) {
+            $image = explode('base64,', $image, 2)[1];
+        }
+
+        if (! $image && strlen($query) < 3) {
+            return response()->json(['message' => 'Provide text (3+ chars) or a product image.'], 422);
+        }
 
         $filters = $validated['filters'] ?? [];
         if (is_string($filters)) {
@@ -25,9 +38,11 @@ class SearchController extends Controller
         }
 
         $result = $this->orchestrator->search(
-            $validated['q'],
+            $query ?: 'find this product',
             is_array($filters) ? $filters : [],
-            $validated['locale'] ?? null
+            $validated['locale'] ?? null,
+            $image,
+            $validated['location_scope'] ?? 'auto',
         );
 
         return response()->json($result);

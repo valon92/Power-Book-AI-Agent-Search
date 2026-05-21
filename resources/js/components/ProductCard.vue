@@ -14,7 +14,13 @@
         {{ product.match_score }}% {{ t('match') }}
       </div>
       <span
-        v-if="product.sponsored"
+        v-if="product.live"
+        class="absolute top-3 left-3 px-2 py-0.5 rounded text-[10px] uppercase tracking-wider bg-emerald-500/90 text-black font-semibold"
+      >
+        Live
+      </span>
+      <span
+        v-else-if="product.sponsored"
         class="absolute top-3 left-3 px-2 py-0.5 rounded text-[10px] uppercase tracking-wider bg-amber-500/90 text-black font-semibold"
       >
         Sponsored

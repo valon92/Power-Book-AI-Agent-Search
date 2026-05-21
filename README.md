@@ -98,6 +98,19 @@ storage/data/
 └── trending.json
 ```
 
+## OpenAI parser (optional)
+
+Add your key to `.env` (never commit this file):
+
+```env
+OPENAI_API_KEY=sk-...
+OPENAI_MODEL=gpt-4o-mini
+OPENAI_ENABLED=true
+```
+
+Get keys at [platform.openai.com/api-keys](https://platform.openai.com/api-keys).  
+If the key is missing or the API fails, the app falls back to the rule-based parser automatically.
+
 ## Plugging in real marketplaces
 
 1. Create `app/Services/Marketplace/MobileDeService.php` implementing `MarketplaceSearchInterface`

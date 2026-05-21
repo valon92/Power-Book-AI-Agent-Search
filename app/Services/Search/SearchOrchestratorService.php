@@ -50,6 +50,7 @@ class SearchOrchestratorService
                 'total' => count($products),
                 'sources_queried' => $expanded['marketplaces'] ?? [],
                 'processing_ms' => random_int(180, 420),
+                'parser' => $parsed['parser'] ?? 'rules',
             ],
         ];
     }

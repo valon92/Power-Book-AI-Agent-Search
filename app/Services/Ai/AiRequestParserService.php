@@ -2,12 +2,15 @@
 
 namespace App\Services\Ai;
 
+use Illuminate\Support\Facades\Log;
+
 /**
  * Converts natural-language shopping queries into structured attributes.
- * Rule-based NLP for MVP; swap for LLM API without changing consumers.
+ * Uses OpenAI when configured; falls back to rule-based parser.
  */
 class AiRequestParserService
 {
+    public function __construct(private OpenAiParserService $openAi) {}
     /** @var array<string, array<string>> */
     private array $categoryKeywords = [
         'car' => ['audi', 'bmw', 'mercedes', 'volkswagen', 'toyota', 'honda', 'ford', 'km', 'mileage', 'sedan', 'suv', 'diesel', 'petrol', 'automatic', 'manual'],
@@ -27,6 +30,28 @@ class AiRequestParserService
      */
     public function parse(string $query, ?string $country = null): array
     {
+        if ($this->shouldUseOpenAi()) {
+            try {
+                return $this->openAi->parse($query, $country);
+            } catch (\Throwable $e) {
+                Log::warning('OpenAI parser fallback to rules', ['error' => $e->getMessage()]);
+            }
+        }
+
+        return $this->parseWithRules($query, $country);
+    }
+
+    private function shouldUseOpenAi(): bool
+    {
+        return config('openai.enabled')
+            && ! empty(config('openai.api_key'));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function parseWithRules(string $query, ?string $country): array
+    {
         $normalized = mb_strtolower(trim($query));
         $category = $this->detectCategory($normalized);
 
@@ -36,6 +61,7 @@ class AiRequestParserService
             'keywords' => $this->extractKeywords($normalized),
             'country' => $country,
             'language_hint' => $this->detectLanguageHint($query),
+            'parser' => 'rules',
         ];
 
         return array_merge($result, $this->extractCategoryAttributes($normalized, $category));

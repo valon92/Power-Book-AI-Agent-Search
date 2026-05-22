@@ -6,13 +6,20 @@
       </div>
       <h1 class="sr-only">Powerbook.ai</h1>
 
-      <p class="hero-badge mx-auto">
+      <router-link
+        to="/how-it-works"
+        class="hero-badge hero-badge--link mx-auto"
+        :aria-label="t('how.badge_aria')"
+      >
         <span class="relative flex h-2 w-2">
           <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-60" />
           <span class="relative inline-flex rounded-full h-2 w-2 bg-sky-400" />
         </span>
         {{ t('hero_ai_badge') }}
-      </p>
+        <svg class="w-3.5 h-3.5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
+      </router-link>
 
       <p class="tagline-hero text-slate-300/90 mb-8 max-w-xl mx-auto w-full px-1 sm:px-0 sm:text-xl font-medium">
         {{ tagline }}

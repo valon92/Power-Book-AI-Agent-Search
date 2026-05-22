@@ -1,6 +1,66 @@
 {
   "tagline": "Describe it. Powerbook finds it.",
   "hero_ai_badge": "AI semantic search",
+  "how": {
+    "badge_aria": "Learn how Powerbook.ai works",
+    "back_home": "Back to search",
+    "title": "How Powerbook.ai works",
+    "subtitle": "A modern AI shopping engine that understands natural language — not just keywords — and finds the best listings for you across marketplaces.",
+    "what_title": "What is Powerbook.ai?",
+    "what_body": "Powerbook is a semantic shopping search platform. You describe what you want in everyday language (or upload a photo), and our AI turns that into structured intent, searches relevant marketplaces, and ranks results by how well they match your request. No account, no forms — just describe and discover.",
+    "pipeline_title": "The search pipeline",
+    "serve_title": "What the platform delivers",
+    "serve_intro": "Powerbook is built for buyers who want clarity before they click through to a listing:",
+    "serve_items": {
+      "intent": "Clear AI interpretation of what you asked for",
+      "marketplaces": "Aggregated results from multiple marketplace sources",
+      "ranking": "Ranked matches with reasons why each item fits",
+      "links": "Direct paths to view listings where products are sold",
+      "locale": "English and Albanian — tuned to your region when possible",
+      "privacy": "No sign-up: stateless, session-free search"
+    },
+    "features_title": "Built for how people actually shop",
+    "categories_title": "What you can search for",
+    "categories_body": "Cars, books, art, electronics, furniture, fashion, luxury, real estate, gifts, and more — one engine, many categories.",
+    "cta_text": "Ready to try it? Describe your next purchase in your own words.",
+    "cta_search": "Start searching",
+    "steps": {
+      "describe": {
+        "title": "You describe (or show) what you want",
+        "body": "Type a natural-language request — e.g. “Audi A6 2020 white under 180k km” — or upload a product photo. Choose search scope: your city, country, region, or worldwide."
+      },
+      "parse": {
+        "title": "AI understands intent",
+        "body": "Our parser extracts category, brand, price limits, features, colors, and more into structured JSON. With photos, vision AI identifies the product type and visual attributes."
+      },
+      "search": {
+        "title": "Marketplaces are queried",
+        "body": "Powerbook searches mock (and future live) marketplace providers in parallel, filtered by your location scope and parsed criteria."
+      },
+      "rank": {
+        "title": "Results are ranked for you",
+        "body": "Each listing gets a relevance score. You see why AI picked it, apply smart filters, and open the best matches — ranked, not just listed."
+      }
+    },
+    "features": {
+      "semantic": {
+        "title": "Semantic, not keyword-only",
+        "body": "Meaning and context matter. Similar ideas match even when wording differs from listing titles."
+      },
+      "vision": {
+        "title": "Photo search",
+        "body": "Snap or upload an image; AI describes the product and feeds that into the same search pipeline."
+      },
+      "geo": {
+        "title": "Location-aware",
+        "body": "Detects your region via IP and prioritizes nearby listings when you want local results."
+      },
+      "instant": {
+        "title": "Instant, no account",
+        "body": "Real-time AI search with no registration, passwords, or saved profiles."
+      }
+    }
+  },
   "top": "Top",
   "back_to_top": "Back to top",
   "search": "Search",

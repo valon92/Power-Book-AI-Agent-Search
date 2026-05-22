@@ -46,17 +46,27 @@ npm run dev
 
 ### Test on iPhone / phone on same Wi‑Fi
 
-`php artisan serve` listens only on **127.0.0.1** — other devices cannot open `192.168.x.x`.
+`php artisan serve` (default port 8000) listens only on **127.0.0.1** — your phone **cannot** open `localhost`, `127.0.0.1`, or your **public internet IP** from another device.
+
+Use the Mac’s **Wi‑Fi LAN IP** (e.g. `192.168.1.114` — System Settings → Network → Wi‑Fi → Details).
 
 ```bash
-npm run build
-npm run serve:lan
+npm run lan
 ```
 
-On your phone (same Wi‑Fi), open: **http://192.168.0.101:8765**  
-(Replace with your Mac’s LAN IP from System Settings → Network.)
+If you see **“Address already in use”**, the server may already be running — run `npm run lan` again (it prints the iPhone URL) or open the URL below.
 
-If it still fails: allow **php** in macOS Firewall, and confirm Mac + iPhone use the same network (not guest Wi‑Fi).
+On your phone (**same Wi‑Fi**, not mobile data), open in **Safari**:
+
+**http://192.168.1.114:8766**
+
+(Replace the IP with your Mac’s LAN address from **System Settings → Network → Wi‑Fi**. Do **not** use your public internet IP or `localhost`.)
+
+Stop LAN server: `npm run lan:stop`
+
+**Important:** Do not run `npm run dev` (Vite) at the same time as `npm run lan`. Vite makes Laravel serve `localhost:5173` assets — on iPhone that points to the phone, so the page stays blank. ipko works because it only uses `public/build/`.
+
+If the page never loads: router **AP isolation** / guest Wi‑Fi often blocks phone→Mac. Try Mac **Personal Hotspot** and connect the iPhone to it, then use the hotspot IP.
 
 ## API endpoints
 
@@ -202,6 +212,20 @@ Laravel requires PHP runtime — use Render/Railway for the API. For split deplo
 - Optional static CDN for assets only
 
 ## Domain (Namecheap → Powerbook.ai)
+
+### Same cPanel as arontrade.net (shared hosting)
+
+Use a **separate addon domain folder** — do **not** upload into `public_html` (that is arontrade.net).
+
+Full step-by-step: **[docs/DEPLOY_CPANEL.md](docs/DEPLOY_CPANEL.md)**
+
+Summary:
+1. Namecheap DNS: **A** `@` and `www` → server IP (`162.0.232.61`)
+2. cPanel → Addon domain `powerbook.ai` → document root `/home/aronqbxm/powerbook.ai/public`
+3. Clone repo, `composer install --no-dev`, `npm run build`, configure `.env`
+4. SSL via AutoSSL in cPanel
+
+### Cloud (Render / Railway)
 
 1. Add CNAME record: `@` or `www` → your Render/Railway host
 2. Enable HTTPS on host

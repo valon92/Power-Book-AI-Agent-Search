@@ -5,7 +5,9 @@
         "dev": "vite",
         "build": "vite build",
         "serve": "php artisan serve --host=0.0.0.0 --port=8765",
-        "serve:lan": "php artisan serve --host=0.0.0.0 --port=8765"
+        "serve:lan": "bash scripts/serve-lan.sh",
+        "lan": "npm run build && npm run serve:lan",
+        "lan:stop": "lsof -ti :8766 | xargs kill 2>/dev/null || true; lsof -ti :5173 | xargs kill 2>/dev/null || true; rm -f public/hot"
     },
     "devDependencies": {
         "@tailwindcss/forms": "^0.5.11",

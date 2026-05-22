@@ -217,6 +217,54 @@
       text-sky-200/90 bg-sky-500/10 border border-sky-500/20 mb-6;
   }
 
+  .hero-badge--link {
+    @apply cursor-pointer no-underline
+      hover:bg-sky-500/20 hover:border-sky-400/40 hover:text-sky-100
+      focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/50
+      active:scale-[0.98] transition-all duration-200;
+  }
+
+  .how-step-num {
+    @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-xl
+      text-sm font-bold text-white;
+  }
+
+  .how-step-num--sky {
+    @apply bg-sky-500/20 text-sky-300 ring-1 ring-sky-500/30;
+  }
+
+  .how-step-num--violet {
+    @apply bg-violet-500/20 text-violet-300 ring-1 ring-violet-500/30;
+  }
+
+  .how-step-num--emerald {
+    @apply bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/30;
+  }
+
+  .how-step-num--amber {
+    @apply bg-amber-500/20 text-amber-300 ring-1 ring-amber-500/30;
+  }
+
+  .how-feature-icon {
+    @apply flex h-10 w-10 items-center justify-center rounded-xl mb-3;
+  }
+
+  .how-feature-icon--sky {
+    @apply bg-sky-500/15 text-sky-400;
+  }
+
+  .how-feature-icon--violet {
+    @apply bg-violet-500/15 text-violet-400;
+  }
+
+  .how-feature-icon--emerald {
+    @apply bg-emerald-500/15 text-emerald-400;
+  }
+
+  .how-feature-icon--amber {
+    @apply bg-amber-500/15 text-amber-400;
+  }
+
   /* Header brand: icon mark + Powerbook.ai */
   .header-brand {
     @apply inline-flex items-center gap-2 sm:gap-2.5 min-w-0;

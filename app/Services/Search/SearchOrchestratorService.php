@@ -2,6 +2,7 @@
 
 namespace App\Services\Search;
 
+use App\Support\ShoeSize;
 use App\Services\Ai\AiRequestParserService;
 use App\Services\Ai\ProductVisionService;
 use App\Services\Geo\GeoLocationService;
@@ -64,6 +65,10 @@ class SearchOrchestratorService
             $locale
         );
         if ($visionAnalysis) {
+            $visionSize = ShoeSize::normalize($visionAnalysis['size'] ?? null)
+                ?? ShoeSize::normalize($visionAnalysis['shoe_size'] ?? null)
+                ?? ShoeSize::extractFromText($visionAnalysis['description'] ?? '');
+
             $parsed = array_merge($parsed, array_filter([
                 'vision' => true,
                 'description' => $visionAnalysis['description'] ?? null,
@@ -71,6 +76,8 @@ class SearchOrchestratorService
                 'brand' => $parsed['brand'] ?? $visionAnalysis['brand'] ?? null,
                 'color' => $parsed['color'] ?? $visionAnalysis['color'] ?? null,
                 'style' => $parsed['style'] ?? $visionAnalysis['style'] ?? null,
+                'size' => $parsed['size'] ?? $visionSize,
+                'product_type' => $parsed['product_type'] ?? $visionAnalysis['product_type'] ?? null,
                 'category' => $visionAnalysis['category'] ?? $parsed['category'],
             ]));
             $parsed['raw_query'] = $visionAnalysis['search_query'] ?? $parsed['raw_query'];
@@ -90,7 +97,7 @@ class SearchOrchestratorService
         $expanded = $this->expansion->expand($parsed, $geo);
         $expanded['location_tiers'] = $locationTiers;
         $expanded['location_scope'] = $locationScope;
-        $dynamicFilters = $this->expansion->buildDynamicFilters($parsed);
+        $dynamicFilters = $this->expansion->buildDynamicFilters($parsed, $locale);
 
         // Step 3: Internet search (local first, then broader)
         $search = $this->aggregator->searchAll($parsed, $expanded, $geo);
@@ -175,6 +182,27 @@ class SearchOrchestratorService
             }
             if (isset($filters['min_sqm']) && ($product['sqm'] ?? 0) < (int) $filters['min_sqm']) {
                 return false;
+            }
+            if (isset($filters['size']) && $filters['size'] !== '' && ! ShoeSize::productHasSize($product, (string) $filters['size'])) {
+                // Keep Kosovo local stores visible — buyer verifies sizes on the shop page
+                if (($product['store'] ?? '') !== 'driloni') {
+                    return false;
+                }
+            }
+            if (isset($filters['brand']) && $filters['brand'] !== '') {
+                $brand = mb_strtolower((string) $filters['brand']);
+                $title = mb_strtolower($product['title'] ?? '');
+                $tags = array_map('mb_strtolower', $product['tags'] ?? []);
+                if (! str_contains($title, $brand) && ! in_array($brand, $tags, true)) {
+                    return false;
+                }
+            }
+            if (isset($filters['product_type']) && $filters['product_type'] !== '') {
+                $type = mb_strtolower((string) $filters['product_type']);
+                $title = mb_strtolower($product['title'] ?? '');
+                if (! str_contains($title, $type)) {
+                    return false;
+                }
             }
 
             return true;

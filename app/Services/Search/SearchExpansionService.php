@@ -30,12 +30,12 @@ class SearchExpansionService
      */
     public function expand(array $parsed, array $geo): array
     {
-        $countryCode = $geo['country_code'] ?? 'XK';
+        $countryCode = strtoupper((string) ($geo['country_code'] ?? 'XK'));
 
         $expanded = [
             'original' => $parsed,
             'nearby_countries' => $this->nearbyCountries[$countryCode] ?? ['DE', 'IT', 'FR'],
-            'marketplaces' => $this->marketplacesForCategory($parsed['category'] ?? 'marketplace'),
+            'marketplaces' => $this->marketplacesForCategory($parsed['category'] ?? 'marketplace', $countryCode),
             'smart_filters' => $this->buildSmartFilters($parsed),
         ];
 
@@ -58,30 +58,72 @@ class SearchExpansionService
      * @param  array<string, mixed>  $parsed
      * @return array<int, array<string, mixed>>
      */
-    public function buildDynamicFilters(array $parsed): array
+    public function buildDynamicFilters(array $parsed, ?string $locale = 'en'): array
     {
         $filters = [];
         $category = $parsed['category'] ?? 'marketplace';
+        $sq = $locale === 'sq';
 
         if ($category === 'car') {
             $filters[] = ['key' => 'year', 'type' => 'range', 'label' => 'Year', 'min' => 1995, 'max' => (int) date('Y'), 'value' => $parsed['year'] ?? null];
             $filters[] = ['key' => 'max_km', 'type' => 'range', 'label' => 'Max mileage', 'min' => 0, 'max' => 300000, 'value' => $parsed['max_km'] ?? null];
             $filters[] = ['key' => 'color', 'type' => 'select', 'label' => 'Color', 'options' => ['white', 'black', 'silver', 'grey', 'red', 'blue'], 'value' => $parsed['color'] ?? null];
             $filters[] = ['key' => 'transmission', 'type' => 'select', 'label' => 'Transmission', 'options' => ['automatic', 'manual'], 'value' => $parsed['transmission'] ?? null];
+            $filters[] = ['key' => 'fuel', 'type' => 'select', 'label' => 'Fuel', 'options' => ['petrol', 'diesel', 'electric', 'hybrid'], 'value' => $parsed['fuel'] ?? null];
             $filters[] = ['key' => 'price', 'type' => 'range', 'label' => 'Price (€)', 'min' => 1000, 'max' => 150000, 'value' => null];
             $filters[] = ['key' => 'country', 'type' => 'select', 'label' => 'Country', 'options' => ['Kosovo', 'Albania', 'Germany', 'Italy', 'Austria'], 'value' => $parsed['country'] ?? null];
             $filters[] = ['key' => 'condition', 'type' => 'select', 'label' => 'Condition', 'options' => ['new', 'used', 'certified'], 'value' => 'used'];
             $filters[] = ['key' => 'seller_type', 'type' => 'select', 'label' => 'Seller', 'options' => ['dealer', 'private'], 'value' => null];
         } elseif ($category === 'book') {
             $filters[] = ['key' => 'genre', 'type' => 'select', 'label' => 'Genre', 'options' => ['thriller', 'psychological', 'mystery', 'romance', 'sci-fi'], 'value' => $parsed['genre'] ?? null];
-            $filters[] = ['key' => 'price', 'type' => 'range', 'label' => 'Price', 'min' => 5, 'max' => 80, 'value' => null];
+            $filters[] = ['key' => 'format', 'type' => 'select', 'label' => 'Format', 'options' => ['paperback', 'hardcover', 'ebook'], 'value' => null];
+            $filters[] = ['key' => 'price', 'type' => 'range', 'label' => 'Price', 'min' => 5, 'max' => 80, 'value' => $parsed['max_price'] ?? null];
+        } elseif ($category === 'painting') {
+            $filters[] = ['key' => 'style', 'type' => 'select', 'label' => 'Style', 'options' => ['vintage', 'modern', 'abstract', 'impressionist', 'minimalist'], 'value' => $parsed['style'] ?? null];
+            $filters[] = ['key' => 'room', 'type' => 'select', 'label' => 'Room', 'options' => ['living room', 'bedroom', 'office', 'kitchen'], 'value' => $parsed['room'] ?? null];
+            $filters[] = ['key' => 'color', 'type' => 'select', 'label' => 'Color', 'options' => ['blue', 'red', 'green', 'neutral', 'multicolor'], 'value' => $parsed['color'] ?? null];
+            $filters[] = ['key' => 'price', 'type' => 'range', 'label' => 'Price', 'min' => 20, 'max' => 5000, 'value' => $parsed['max_price'] ?? null];
         } elseif ($category === 'electronics') {
             $filters[] = ['key' => 'product_type', 'type' => 'select', 'label' => 'Type', 'options' => ['laptop', 'phone', 'tablet', 'monitor'], 'value' => $parsed['product_type'] ?? null];
             $filters[] = ['key' => 'price', 'type' => 'range', 'label' => 'Price', 'min' => 200, 'max' => 5000, 'value' => $parsed['max_price'] ?? null];
+            $filters[] = ['key' => 'condition', 'type' => 'select', 'label' => 'Condition', 'options' => ['new', 'used', 'refurbished'], 'value' => $parsed['condition'] ?? null];
         } elseif ($category === 'real_estate') {
             $filters[] = ['key' => 'min_sqm', 'type' => 'range', 'label' => 'Min area (m²)', 'min' => 40, 'max' => 300, 'value' => $parsed['min_sqm'] ?? null];
             $filters[] = ['key' => 'listing_type', 'type' => 'select', 'label' => 'Listing', 'options' => ['rent', 'sale'], 'value' => $parsed['listing_type'] ?? null];
             $filters[] = ['key' => 'price', 'type' => 'range', 'label' => 'Price (€)', 'min' => 200, 'max' => 500000, 'value' => null];
+        } elseif ($category === 'fashion' || $category === 'luxury') {
+            $filters[] = [
+                'key' => 'size',
+                'type' => 'number',
+                'label' => $sq ? 'Numri (EU)' : 'Size (EU)',
+                'min' => 35,
+                'max' => 48,
+                'step' => 0.5,
+                'value' => $parsed['size'] ?? null,
+            ];
+            $filters[] = [
+                'key' => 'brand',
+                'type' => 'select',
+                'label' => $sq ? 'Marka' : 'Brand',
+                'options' => ['adidas', 'nike', 'puma', 'reebok', 'new balance', 'jordan'],
+                'value' => isset($parsed['brand']) ? mb_strtolower($parsed['brand']) : null,
+            ];
+            $filters[] = [
+                'key' => 'color',
+                'type' => 'select',
+                'label' => $sq ? 'Ngjyra' : 'Color',
+                'options' => ['black', 'white', 'red', 'blue', 'grey', 'green'],
+                'value' => $parsed['color'] ?? null,
+            ];
+            $filters[] = [
+                'key' => 'product_type',
+                'type' => 'select',
+                'label' => $sq ? 'Lloji' : 'Type',
+                'options' => ['sneakers', 'shoes', 'boots', 'trainers'],
+                'value' => $parsed['product_type'] ?? null,
+            ];
+            $filters[] = ['key' => 'price', 'type' => 'range', 'label' => $sq ? 'Çmimi max (€)' : 'Max price (€)', 'min' => 10, 'max' => 500, 'value' => $parsed['max_price'] ?? null];
+            $filters[] = ['key' => 'condition', 'type' => 'select', 'label' => $sq ? 'Gjendja' : 'Condition', 'options' => ['new', 'used'], 'value' => $parsed['condition'] ?? null];
         } else {
             $filters[] = ['key' => 'price', 'type' => 'range', 'label' => 'Price', 'min' => 10, 'max' => 10000, 'value' => $parsed['max_price'] ?? null];
             $filters[] = ['key' => 'condition', 'type' => 'select', 'label' => 'Condition', 'options' => ['new', 'used', 'vintage'], 'value' => null];
@@ -93,12 +135,16 @@ class SearchExpansionService
     /**
      * @return array<int, string>
      */
-    private function marketplacesForCategory(string $category): array
+    private function marketplacesForCategory(string $category, string $countryCode = 'XK'): array
     {
+        if ($countryCode === 'XK' && in_array($category, ['fashion', 'luxury', 'marketplace'], true)) {
+            return ['driloni', 'ebay', 'google_shopping', 'etsy', 'facebook_marketplace'];
+        }
+
         return match ($category) {
             'car' => ['mobile.de', 'autoscout24', 'facebook_marketplace'],
             'book' => ['amazon', 'ebay', 'google_shopping'],
-            'painting', 'collectibles', 'gift', 'fashion' => ['etsy', 'ebay', 'facebook_marketplace'],
+            'painting', 'collectibles', 'gift', 'fashion', 'luxury' => ['etsy', 'ebay', 'facebook_marketplace', 'google_shopping'],
             'electronics', 'furniture' => ['amazon', 'ebay', 'google_shopping'],
             'real_estate' => ['facebook_marketplace', 'google_shopping'],
             default => ['ebay', 'amazon', 'google_shopping', 'etsy'],
@@ -116,6 +162,7 @@ class SearchExpansionService
             'model' => $parsed['model'] ?? null,
             'genre' => $parsed['genre'] ?? null,
             'style' => $parsed['style'] ?? null,
+            'size' => $parsed['size'] ?? null,
         ]);
     }
 

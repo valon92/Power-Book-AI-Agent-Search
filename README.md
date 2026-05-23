@@ -1,9 +1,11 @@
 # Power-Book-AI-Agent-Search · Powerbook.ai
 
-**Describe it. Powerbook finds it.**  
+**Describe it. Powerbook finds it.** · *Search less. Discover smarter.*  
 *Albanian: Trego çfarë kërkon — Powerbook e gjen.*
 
-AI-powered semantic shopping search engine. Visitors describe products in natural language; Powerbook parses intent, detects location via IP, searches mock marketplaces, and ranks results — **no database, no auth, no sessions**.
+Powerbook.ai is **not a traditional marketplace**. It is a **semantic product discovery engine**: users describe what they want in natural language (or a photo); the AI understands intent, expands meaning, searches sources across the internet, ranks by relevance and location, and **then** generates dynamic filters to refine — **no database, no registration, no login**.
+
+Full product vision: **[docs/PLATFORM_VISION.md](docs/PLATFORM_VISION.md)**
 
 ## Stack
 
@@ -97,11 +99,11 @@ app/
 │   ├── Ai/AiRequestParserService.php          # NL → structured JSON
 │   ├── Geo/GeoLocationService.php             # Free IP APIs
 │   ├── Marketplace/MockMarketplaceService.php # Mock providers
-│   └── Search/SearchOrchestratorService.php   # Pipeline orchestration
+│   └── Search/SearchOrchestratorService.php   # 7-step pipeline orchestration
 resources/js/
 ├── views/          # Home, Results
 ├── components/     # Search, Cards, Filters, Background
-├── i18n/           # en.json, sq.json
+├── i18n/           # en, sq, de, fr, it (EN fallback)
 └── services/api.js
 storage/data/
 ├── products/*.json # Mock marketplace inventory

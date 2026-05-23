@@ -1,0 +1,51 @@
+[
+  {
+    "id": "driloni-adidas-rapid-court-j",
+    "store": "driloni",
+    "title": "Adidas RAPID COURT LOW J — Patika për Femra (e zezë)",
+    "image": "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=800&q=80",
+    "price": 34.4,
+    "currency": "EUR",
+    "location": "Ferizaj, Kosovo",
+    "country_code": "XK",
+    "condition": "new",
+    "brand": "adidas",
+    "product_type": "sneakers",
+    "color": "black",
+    "sizes": ["36", "38", "39", "40"],
+    "url": "https://driloni-ks.com/product/rapid-court-low-j-8/",
+    "tags": ["fashion", "sneakers", "adidas", "black", "patika", "women", "driloni", "kosovo"]
+  },
+  {
+    "id": "fashion-nike-42-black",
+    "store": "general",
+    "title": "Nike Air Max 90 — Black Sneakers EU 42.5",
+    "image": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&q=80",
+    "price": 89,
+    "currency": "EUR",
+    "location": "EU Wide",
+    "condition": "new",
+    "brand": "nike",
+    "product_type": "sneakers",
+    "color": "black",
+    "sizes": ["42", "42.5", "43"],
+    "url": "https://ebay.com",
+    "tags": ["fashion", "sneakers", "nike", "black", "42.5"]
+  },
+  {
+    "id": "fashion-adidas-42-black",
+    "store": "general",
+    "title": "Adidas Stan Smith — Black Leather Sneakers 42.5",
+    "image": "https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=800&q=80",
+    "price": 75,
+    "currency": "EUR",
+    "location": "Germany",
+    "condition": "new",
+    "brand": "adidas",
+    "product_type": "sneakers",
+    "color": "black",
+    "sizes": ["42", "42.5"],
+    "url": "https://amazon.de",
+    "tags": ["fashion", "sneakers", "adidas", "black", "42.5"]
+  }
+]

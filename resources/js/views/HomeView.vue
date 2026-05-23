@@ -21,9 +21,16 @@
         </svg>
       </router-link>
 
-      <p class="tagline-hero text-slate-300/90 mb-8 max-w-xl mx-auto w-full px-1 sm:px-0 sm:text-xl font-medium">
+      <p class="tagline-hero text-slate-300/90 mb-2 max-w-xl mx-auto w-full px-1 sm:px-0 sm:text-xl font-medium">
         {{ tagline }}
       </p>
+      <p
+        v-if="taglineAlt"
+        class="text-slate-500 text-xs sm:text-sm mb-8 max-w-md mx-auto"
+      >
+        {{ taglineAlt }}
+      </p>
+      <p v-else class="mb-8" />
 
       <SearchInput v-model="query" :loading="loading" @search="goSearch" />
     </div>
@@ -43,7 +50,7 @@ import ExamplePrompts from '../components/ExamplePrompts.vue';
 import TrendingSearches from '../components/TrendingSearches.vue';
 
 const router = useRouter();
-const { tagline, locale, t } = inject('i18n');
+const { tagline, taglineAlt, locale, t } = inject('i18n');
 const query = ref('');
 const loading = ref(false);
 

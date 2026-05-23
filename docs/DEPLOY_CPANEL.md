@@ -186,6 +186,9 @@ cPanel → **Select PHP Version** (ose **MultiPHP Manager**):
 │   ├── app/
 │   ├── public/               ← Document Root i powerbook.ai
 │   │   ├── index.php
+│   │   ├── favicon.ico
+│   │   ├── favicon-32x32.png
+│   │   ├── apple-touch-icon.png
 │   │   ├── build/
 │   │   └── images/
 │   ├── storage/

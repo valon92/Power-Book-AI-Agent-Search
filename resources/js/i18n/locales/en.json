@@ -1,14 +1,31 @@
 {
   "tagline": "Describe it. Powerbook finds it.",
+  "tagline_alt": "Search less. Discover smarter.",
   "hero_ai_badge": "AI semantic search",
   "how": {
     "badge_aria": "Learn how Powerbook.ai works",
     "back_home": "Back to search",
     "title": "How Powerbook.ai works",
-    "subtitle": "A modern AI shopping engine that understands natural language — not just keywords — and finds the best listings for you across marketplaces.",
+    "subtitle": "A futuristic semantic discovery engine — not a traditional marketplace. Describe first; intelligent filters appear after AI understands you.",
     "what_title": "What is Powerbook.ai?",
-    "what_body": "Powerbook is a semantic shopping search platform. You describe what you want in everyday language (or upload a photo), and our AI turns that into structured intent, searches relevant marketplaces, and ranks results by how well they match your request. No account, no forms — just describe and discover.",
-    "pipeline_title": "The search pipeline",
+    "what_body": "Powerbook is an AI product discovery engine. You do not start with filters — you describe what you want in your own words (or show a photo). The agent understands intent, expands meaning semantically, searches across the internet, ranks the best matches, and then generates dynamic filters to refine live. No database, no registration, no login.",
+    "principles_title": "Built for instant discovery",
+    "principles": {
+      "describe": "Natural language or photo — no forms first",
+      "stateless": "No accounts, no saved profiles",
+      "local": "Your country and region prioritized automatically",
+      "ranked": "Semantic match score — not price-only sorting"
+    },
+    "pipeline_title": "The 7-step AI flow",
+    "filter_examples_title": "Dynamic filters (after results)",
+    "filter_examples_intro": "Filters are not static. They are generated per category after AI analysis:",
+    "filter_examples": {
+      "car": "Price, year, mileage, fuel, transmission, color, location",
+      "book": "Genre, format, price",
+      "painting": "Style, room, color palette, price",
+      "electronics": "Type, price, features",
+      "fashion": "EU size, brand, color, type, condition"
+    },
     "serve_title": "What the platform delivers",
     "serve_intro": "Powerbook is built for buyers who want clarity before they click through to a listing:",
     "serve_items": {
@@ -16,7 +33,7 @@
       "marketplaces": "Aggregated results from multiple marketplace sources",
       "ranking": "Ranked matches with reasons why each item fits",
       "links": "Direct paths to view listings where products are sold",
-      "locale": "English and Albanian — tuned to your region when possible",
+      "locale": "English + your country language (from IP) — e.g. EN & SQ in Kosovo, EN & IT in Italy",
       "privacy": "No sign-up: stateless, session-free search"
     },
     "features_title": "Built for how people actually shop",
@@ -26,20 +43,32 @@
     "cta_search": "Start searching",
     "steps": {
       "describe": {
-        "title": "You describe (or show) what you want",
-        "body": "Type a natural-language request — e.g. “Audi A6 2020 white under 180k km” — or upload a product photo. Choose search scope: your city, country, region, or worldwide."
+        "title": "1 — You describe what you want",
+        "body": "One intelligent search box. Examples: “Audi A6 2020 white under 180k km”, “gaming laptop silent cooling”, or upload a product photo."
       },
       "parse": {
-        "title": "AI understands intent",
-        "body": "Our parser extracts category, brand, price limits, features, colors, and more into structured JSON. With photos, vision AI identifies the product type and visual attributes."
+        "title": "2 — AI analyzes intent",
+        "body": "NLP and vision extract structured attributes: category, brand, model, color, price, size, features — like a professional buying assistant."
+      },
+      "expand": {
+        "title": "3 — Semantic expansion",
+        "body": "AI thinks beyond exact words: similar colors (pearl white, glacier white), trims, years, and related concepts to widen smart matches."
+      },
+      "geo": {
+        "title": "4 — Location priority",
+        "body": "Free IP geolocation. Your country first, then neighbors, then EU/global — e.g. Kosovo → Albania & region → Germany → worldwide."
       },
       "search": {
-        "title": "Marketplaces are queried",
-        "body": "Powerbook searches mock (and future live) marketplace providers in parallel, filtered by your location scope and parsed criteria."
+        "title": "5 — Internet-wide search",
+        "body": "Aggregators query eBay, Google Shopping, regional stores, and curated datasets. Architecture supports new APIs and connectors."
       },
       "rank": {
-        "title": "Results are ranked for you",
-        "body": "Each listing gets a relevance score. You see why AI picked it, apply smart filters, and open the best matches — ranked, not just listed."
+        "title": "6 — AI ranking",
+        "body": "Results scored by relevance, location, and fit — with match %, source, and “why this matches”, not cheapest-first."
+      },
+      "filters": {
+        "title": "7 — Dynamic filters (live refine)",
+        "body": "After results load, category-specific filters appear. Adjust price, size, year, genre, etc. Results update live without a full page reload."
       }
     },
     "features": {
@@ -134,6 +163,7 @@
     "fuel": "Fuel",
     "genre": "Genre",
     "condition": "Condition",
-    "max_price": "Max price"
+    "max_price": "Max price",
+    "size": "Size (EU)"
   }
 }

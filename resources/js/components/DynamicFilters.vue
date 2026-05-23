@@ -27,6 +27,18 @@
         </select>
 
         <input
+          v-else-if="filter.type === 'number'"
+          type="number"
+          :min="filter.min"
+          :max="filter.max"
+          :step="filter.step ?? 1"
+          :value="active[filter.key] ?? filter.value ?? ''"
+          :placeholder="filter.placeholder || '—'"
+          class="w-full rounded-lg bg-white/5 border border-white/10 text-sm text-white px-3 py-2 focus:ring-sky-500/40"
+          @input="update(filter.key, $event.target.value === '' ? null : $event.target.value)"
+        />
+
+        <input
           v-else-if="filter.type === 'range'"
           type="range"
           :min="filter.min"

@@ -2,6 +2,8 @@
 
 namespace App\Services\Search;
 
+use App\Support\ShoeSize;
+
 /**
  * Ranks products by semantic relevance to the parsed AI query.
  */
@@ -55,6 +57,22 @@ class ProductRankingService
         }
         if (! empty($parsed['product_type']) && str_contains($title, $parsed['product_type'])) {
             $score += 12;
+        }
+        if (! empty($parsed['size'])) {
+            if (ShoeSize::productHasSize($product, (string) $parsed['size'])) {
+                $score += 18;
+            } elseif (($product['store'] ?? '') === 'driloni' && in_array($parsed['category'] ?? '', ['fashion', 'luxury'], true)) {
+                $score += 8;
+            }
+        }
+        if (($product['store'] ?? '') === 'driloni' && ($parsed['country'] ?? '') && str_contains(mb_strtolower($product['location'] ?? ''), 'kosovo')) {
+            $score += 12;
+        }
+        if (! empty($parsed['color']) && (str_contains($title, $parsed['color']) || in_array($parsed['color'], $tags, true))) {
+            // already scored above — boost driloni local match for sneakers
+            if (str_contains($title, 'sneaker') || str_contains($title, 'patika')) {
+                $score += 4;
+            }
         }
 
         if (($parsed['category'] ?? '') === 'real_estate') {
@@ -141,6 +159,15 @@ class ProductRankingService
         }
         if (! empty($parsed['color'])) {
             $reasons[] = "{$parsed['color']} color match";
+        }
+        if (! empty($parsed['size'])) {
+            if (ShoeSize::productHasSize($product, (string) $parsed['size'])) {
+                $reasons[] = "size EU {$parsed['size']} available";
+            } elseif (($product['store'] ?? '') === 'driloni') {
+                $reasons[] = 'local Kosovo store — check sizes on listing';
+            } else {
+                $reasons[] = "closest match for size {$parsed['size']}";
+            }
         }
         if (! empty($parsed['max_km']) && ! empty($product['mileage']) && $product['mileage'] <= $parsed['max_km']) {
             $reasons[] = 'within your mileage limit';

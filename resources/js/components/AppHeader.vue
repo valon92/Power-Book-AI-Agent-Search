@@ -18,22 +18,20 @@
           <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
           {{ geo.city }}, {{ geo.country }}
         </button>
-        <div class="flex glass rounded-lg p-0.5 text-sm">
+        <div
+          v-if="localeOptions.length > 1"
+          class="flex glass rounded-lg p-0.5 text-xs sm:text-sm"
+        >
           <button
+            v-for="opt in localeOptions"
+            :key="opt.code"
             type="button"
-            class="px-3 py-1 rounded-md transition-colors"
-            :class="locale === 'en' ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white'"
-            @click="setLocale('en')"
+            class="px-2.5 sm:px-3 py-1 rounded-md transition-colors shrink-0"
+            :class="locale === opt.code ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white'"
+            :title="opt.code === 'en' ? 'English' : geo?.country"
+            @click="setLocale(opt.code)"
           >
-            EN
-          </button>
-          <button
-            type="button"
-            class="px-3 py-1 rounded-md transition-colors"
-            :class="locale === 'sq' ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white'"
-            @click="setLocale('sq')"
-          >
-            SQ
+            {{ opt.label }}
           </button>
         </div>
       </div>
@@ -47,7 +45,7 @@ import api from '../services/api';
 import { initLocaleFromGeo } from '../i18n';
 import BrandLogoIcon from './BrandLogoIcon.vue';
 
-const { locale, t, setLocale } = inject('i18n');
+const { locale, t, setLocale, localeOptions } = inject('i18n');
 const geo = ref(null);
 
 onMounted(async () => {

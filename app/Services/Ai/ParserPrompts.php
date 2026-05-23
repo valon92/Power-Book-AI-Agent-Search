@@ -35,6 +35,8 @@ Return ONLY valid JSON with this shape:
   "max_price": null,
   "condition": null,
   "style": null,
+  "size": null,
+  "shoe_size": null,
   "room": null,
   "subject": null,
   "bedrooms": null,
@@ -59,6 +61,7 @@ Rules:
 - real_estate: "banes"/apartment near a landmark (e.g. gjykata in Ferizaj) => category real_estate, city, landmark, min_sqm; nearby_streets if you know them
 - min_sqm: integer area (120m => 120)
 - Albanian: banes=apartment, gjykata=courthouse, Ferizaj=city
+- fashion/shoes: size or shoe_size as EU number string (e.g. 42, 42.5, 43) when mentioned
 PROMPT;
     }
 
@@ -86,10 +89,14 @@ Return JSON:
   "model": null,
   "color": null,
   "style": null,
+  "size": null,
+  "shoe_size": null,
   "materials": [],
   "keywords": [],
   "condition_guess": "new|used|unknown"
 }
+
+For footwear, always set size or shoe_size when visible on the product or stated by the user (EU sizing, e.g. 42.5).
 PROMPT;
     }
 }

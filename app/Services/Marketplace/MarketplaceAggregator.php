@@ -76,6 +76,17 @@ class MarketplaceAggregator
             );
         }
 
+        $countryCode = strtoupper((string) ($geo['country_code'] ?? ''));
+        $category = $parsedQuery['category'] ?? 'marketplace';
+
+        if ($countryCode === 'XK' && in_array($category, ['fashion', 'luxury', 'marketplace'], true)) {
+            $driloni = new MockMarketplaceService('driloni');
+            $expandedFilters['location_suffix'] = $geo['city'] ?? 'Kosovo';
+            $driloniItems = $driloni->search($parsedQuery, $expandedFilters);
+            $results = array_merge($results, $driloniItems);
+            $report[] = $this->reportRow('driloni', 'live', count($driloniItems), 'local_store', $geo['city'] ?? 'Kosovo');
+        }
+
         $skipMocks = $liveResultCount >= 8;
         $mockSources = ['amazon', 'mobile.de', 'autoscout24', 'etsy', 'facebook_marketplace'];
 
@@ -157,7 +168,7 @@ class MarketplaceAggregator
         return match ($category) {
             'car' => in_array($source, ['mobile.de', 'autoscout24', 'ebay', 'google_shopping'], true),
             'book', 'electronics' => in_array($source, ['amazon', 'ebay', 'google_shopping'], true),
-            'fashion', 'luxury' => in_array($source, ['ebay', 'google_shopping', 'etsy'], true),
+            'fashion', 'luxury' => in_array($source, ['driloni', 'ebay', 'google_shopping', 'etsy', 'facebook_marketplace'], true),
             default => in_array($source, ['ebay', 'amazon', 'google_shopping', 'etsy'], true),
         };
     }

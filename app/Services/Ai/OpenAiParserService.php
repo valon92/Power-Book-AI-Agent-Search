@@ -2,6 +2,7 @@
 
 namespace App\Services\Ai;
 
+use App\Support\ShoeSize;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -86,7 +87,7 @@ class OpenAiParserService
         $optional = [
             'description', 'brand', 'model', 'year', 'color', 'max_km', 'transmission', 'fuel',
             'genre', 'product_type', 'features', 'max_price', 'condition',
-            'style', 'room', 'subject', 'bedrooms', 'listing_type', 'length', 'ending', 'item',
+            'style', 'size', 'shoe_size', 'room', 'subject', 'bedrooms', 'listing_type', 'length', 'ending', 'item',
             'city', 'landmark', 'near_landmark', 'property_type', 'min_sqm', 'nearby_streets',
         ];
 
@@ -108,6 +109,13 @@ class OpenAiParserService
         if (isset($result['min_sqm'])) {
             $result['min_sqm'] = (int) $result['min_sqm'];
         }
+
+        $size = ShoeSize::normalize($result['size'] ?? null)
+            ?? ShoeSize::normalize($result['shoe_size'] ?? null);
+        if ($size !== null) {
+            $result['size'] = $size;
+        }
+        unset($result['shoe_size']);
 
         return array_filter($result, fn ($v) => $v !== null && $v !== [] && $v !== '');
     }

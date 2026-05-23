@@ -48,12 +48,14 @@ class MockMarketplaceService implements MarketplaceSearchInterface
             }
         }
 
+        $dataset = $this->filterForSource($dataset);
+
         return array_map(function (array $item) {
             $item['source'] = $this->displaySourceName();
             $item['source_key'] = $this->source;
             $item['affiliate_ready'] = true;
             $item['sponsored'] = (bool) ($item['sponsored'] ?? false);
-            $item['live'] = false;
+            $item['live'] = $this->source === 'driloni';
 
             return $item;
         }, $dataset);
@@ -74,6 +76,25 @@ class MockMarketplaceService implements MarketplaceSearchInterface
         return is_array($data) ? $data : [];
     }
 
+    /**
+     * @param  array<int, array<string, mixed>>  $items
+     * @return array<int, array<string, mixed>>
+     */
+    private function filterForSource(array $items): array
+    {
+        if ($this->source === 'driloni') {
+            return array_values(array_filter(
+                $items,
+                fn (array $item) => ($item['store'] ?? '') === 'driloni'
+            ));
+        }
+
+        return array_values(array_filter(
+            $items,
+            fn (array $item) => ($item['store'] ?? 'general') !== 'driloni'
+        ));
+    }
+
     private function mapSourceToKey(): string
     {
         return str_replace('.', '_', $this->source);
@@ -89,6 +110,7 @@ class MockMarketplaceService implements MarketplaceSearchInterface
             'amazon' => 'Amazon',
             'google_shopping' => 'Google Shopping',
             'facebook_marketplace' => 'Facebook Marketplace',
+            'driloni' => 'Driloni Sportswear',
             default => ucfirst($this->source),
         };
     }

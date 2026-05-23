@@ -14,11 +14,21 @@ class SearchLocale
 
     public static function descriptionLanguage(?string $locale): string
     {
-        return self::isAlbanian($locale) ? 'Albanian' : 'English';
+        return match (strtolower((string) $locale)) {
+            'sq', 'al' => 'Albanian',
+            'de' => 'German',
+            'fr' => 'French',
+            'it' => 'Italian',
+            'es' => 'Spanish',
+            'zh' => 'Chinese',
+            default => 'English',
+        };
     }
 
     public static function normalize(?string $locale): string
     {
-        return self::isAlbanian($locale) ? 'sq' : 'en';
+        $code = strtolower((string) $locale);
+
+        return in_array($code, ['sq', 'de', 'fr', 'it', 'es', 'zh'], true) ? $code : 'en';
     }
 }

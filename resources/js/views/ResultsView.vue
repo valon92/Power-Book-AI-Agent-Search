@@ -214,6 +214,7 @@ async function runSearch() {
       imageBase64,
       activeScope.value
     );
+    applyFilterDefaults(data.value?.filters);
     api.clearSearchImage();
   } catch (e) {
     console.error(e);
@@ -223,11 +224,29 @@ async function runSearch() {
   }
 }
 
+function applyFilterDefaults(filters) {
+  if (!filters?.length) return;
+  const next = { ...activeFilters.value };
+  let changed = false;
+  for (const f of filters) {
+    if (f.value != null && f.value !== '' && next[f.key] === undefined) {
+      next[f.key] = f.value;
+      changed = true;
+    }
+  }
+  if (changed) {
+    activeFilters.value = next;
+  }
+}
+
 function mapFilters(filters) {
   const mapped = { ...filters };
   if (mapped.price != null) {
     mapped.price_max = mapped.price;
     delete mapped.price;
+  }
+  if (mapped.size != null && mapped.size !== '') {
+    mapped.size = String(mapped.size);
   }
   return mapped;
 }

@@ -2,6 +2,7 @@
 
 namespace App\Services\Geo;
 
+use App\Support\LocaleCatalog;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -10,24 +11,6 @@ use Illuminate\Support\Facades\Log;
  */
 class GeoLocationService
 {
-    /** @var array<string, string> */
-    private array $countryToLocale = [
-        'XK' => 'sq',
-        'AL' => 'sq',
-        'MK' => 'sq',
-        'DE' => 'de',
-        'AT' => 'de',
-        'CH' => 'de',
-        'FR' => 'fr',
-        'IT' => 'it',
-        'ES' => 'es',
-        'US' => 'en',
-        'GB' => 'en',
-        'IE' => 'en',
-        'AU' => 'en',
-        'CA' => 'en',
-    ];
-
     /**
      * @return array<string, mixed>
      */
@@ -68,17 +51,7 @@ class GeoLocationService
 
             $code = $response->json('countryCode', 'US');
 
-            return [
-                'ip' => $response->json('query', $ip),
-                'country' => $response->json('country', 'Unknown'),
-                'country_code' => $code,
-                'region' => $response->json('regionName'),
-                'city' => $response->json('city'),
-                'latitude' => $response->json('lat'),
-                'longitude' => $response->json('lon'),
-                'locale' => $this->localeForCountry($code),
-                'provider' => 'ip-api.com',
-            ];
+            return $this->geoPayload($ip, $code, $response->json('country', 'Unknown'), $response->json('regionName'), $response->json('city'), $response->json('lat'), $response->json('lon'), 'ip-api.com');
         } catch (\Throwable $e) {
             Log::debug('ip-api.com geolocation failed', ['error' => $e->getMessage()]);
 
@@ -100,17 +73,7 @@ class GeoLocationService
 
             $code = $response->json('country_code', 'US');
 
-            return [
-                'ip' => $ip,
-                'country' => $response->json('country_name', 'Unknown'),
-                'country_code' => $code,
-                'region' => $response->json('region'),
-                'city' => $response->json('city'),
-                'latitude' => $response->json('latitude'),
-                'longitude' => $response->json('longitude'),
-                'locale' => $this->localeForCountry($code),
-                'provider' => 'ipapi.co',
-            ];
+            return $this->geoPayload($ip, $code, $response->json('country_name', 'Unknown'), $response->json('region'), $response->json('city'), $response->json('latitude'), $response->json('longitude'), 'ipapi.co');
         } catch (\Throwable $e) {
             Log::debug('ipapi.co geolocation failed', ['error' => $e->getMessage()]);
 
@@ -120,7 +83,40 @@ class GeoLocationService
 
     public function localeForCountry(string $countryCode): string
     {
-        return $this->countryToLocale[strtoupper($countryCode)] ?? 'en';
+        return LocaleCatalog::localeForCountry($countryCode);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function geoPayload(
+        string $ip,
+        string $countryCode,
+        ?string $country,
+        ?string $region,
+        ?string $city,
+        ?float $latitude,
+        ?float $longitude,
+        string $provider,
+    ): array {
+        $code = strtoupper($countryCode);
+        $regional = LocaleCatalog::localeForCountry($code);
+
+        return [
+            'ip' => $ip,
+            'country' => $country,
+            'country_code' => $code,
+            'region' => $region,
+            'city' => $city,
+            'latitude' => $latitude,
+            'longitude' => $longitude,
+            'locale' => $regional,
+            'regional_locale' => $regional,
+            'locale_label' => LocaleCatalog::label($regional),
+            'default_locale' => LocaleCatalog::defaultUiLocale($code),
+            'ui_locales' => LocaleCatalog::uiLocalesForCountry($code),
+            'provider' => $provider,
+        ];
     }
 
     /**
@@ -130,17 +126,16 @@ class GeoLocationService
     {
         $city = env('POWERBOOK_DEFAULT_CITY', 'Ferizaj');
 
-        return [
-            'ip' => request()->ip(),
-            'country' => 'Kosovo',
-            'country_code' => 'XK',
-            'region' => 'Pristina',
-            'city' => $city,
-            'latitude' => 42.6629,
-            'longitude' => 21.1655,
-            'locale' => 'sq',
-            'provider' => 'fallback',
-        ];
+        return $this->geoPayload(
+            request()->ip() ?? '127.0.0.1',
+            'XK',
+            'Kosovo',
+            'Pristina',
+            $city,
+            42.6629,
+            21.1655,
+            'fallback'
+        );
     }
 
     private function isLocalIp(?string $ip): bool

@@ -1,14 +1,31 @@
 {
   "tagline": "Trego çfarë kërkon — Powerbook e gjen.",
+  "tagline_alt": "Kërko më pak. Zbulo më smart.",
   "hero_ai_badge": "Kërkim semantik me AI",
   "how": {
     "badge_aria": "Mëso si funksionon Powerbook.ai",
     "back_home": "Kthehu te kërkimi",
     "title": "Si funksionon Powerbook.ai",
-    "subtitle": "Motor modern kërkimi me AI që kupton gjuhën natyrore — jo vetëm fjalë kyçe — dhe gjen listimet më të mira për ty në marketplace.",
+    "subtitle": "Motor futuristik zbulimi semantik — jo marketplace klasik. Së pari përshkruan; filtrat inteligjentë vijnë pasi AI të kupton.",
     "what_title": "Çfarë është Powerbook.ai?",
-    "what_body": "Powerbook është platformë kërkimi semantik për blerje. Përshkruan me gjuhë të përditshme (ose ngarkon foto) çfarë dëshiron; AI e kthen në kërkesë të strukturuar, kërkon në marketplace përkatëse dhe rendit rezultatet sipas përputhjes. Pa llogari, pa forma — vetëm përshkruaj dhe zbulo.",
-    "pipeline_title": "Rrjedha e kërkimit",
+    "what_body": "Powerbook është motor zbulimi produktesh me AI. Nuk fillon me filtra — përshkruan me fjalët e tua (ose tregon foto). Agjenti kupton qëllimin, zgjeron kuptimin semantik, kërkon në internet, rendit përputhjet më të mira, pastaj gjeneron filtra dinamikë për përimtim live. Pa databazë, pa regjistrim, pa kyçje.",
+    "principles_title": "Për zbulim të menjëhershëm",
+    "principles": {
+      "describe": "Gjuhë natyrore ose foto — jo forma në fillim",
+      "stateless": "Pa llogari, pa profile të ruajtura",
+      "local": "Vendi dhe rajoni yt prioritizohen automatikisht",
+      "ranked": "Pikë përputhjeje semantike — jo vetëm çmimi më i ulët"
+    },
+    "pipeline_title": "Rrjedha 7-hapat e AI",
+    "filter_examples_title": "Filtra dinamikë (pas rezultateve)",
+    "filter_examples_intro": "Filtrat nuk janë statikë. Gjenerohen sipas kategorisë pas analizës së AI:",
+    "filter_examples": {
+      "car": "Çmim, vit, km, karburant, transmision, ngjyrë, vendndodhje",
+      "book": "Zhanër, format, çmim",
+      "painting": "Stil, dhomë, paletë ngjyrash, çmim",
+      "electronics": "Lloj, çmim, veçori",
+      "fashion": "Numri EU, markë, ngjyrë, lloj, gjendje"
+    },
     "serve_title": "Çfarë ofron platforma",
     "serve_intro": "Powerbook është ndërtuar për blerësit që duan qartësi para se të klikojnë listimin:",
     "serve_items": {
@@ -16,7 +33,7 @@
       "marketplaces": "Rezultate të grumbulluara nga burime të shumta marketplace",
       "ranking": "Përputhje të renditura me arsye pse çdo artikull përshtatet",
       "links": "Rrugë direkte për të parë listimet ku shitet produkti",
-      "locale": "Anglisht dhe shqip — i përshtatur rajonit tënd kur është e mundur",
+      "locale": "Anglisht + gjuha e vendit (nga IP) — p.sh. EN & SQ në Kosovë, EN & IT në Itali",
       "privacy": "Pa regjistrim: kërkim pa sesion dhe pa llogari"
     },
     "features_title": "Për mënyrën si blihen realisht",
@@ -26,20 +43,32 @@
     "cta_search": "Fillo kërkimin",
     "steps": {
       "describe": {
-        "title": "Ti përshkruan (ose tregon) çfarë dëshiron",
-        "body": "Shkruaj kërkesë në gjuhë natyrore — p.sh. «Audi A6 2020 e bardhë nën 180 mijë km» — ose ngarko foto produkti. Zgjidh zonën: qyteti, vendi, rajoni ose e gjithë bota."
+        "title": "1 — Ti përshkruan çfarë dëshiron",
+        "body": "Një kuti kërkimi inteligjente. Shembuj: «Audi A6 2020 e bardhë nën 180 mijë km», «laptop gaming ftohje e qetë», ose ngarko foto produkti."
       },
       "parse": {
-        "title": "AI kupton qëllimin",
-        "body": "Parser-i nxjerr kategori, markë, çmim max, veçori, ngjyra dhe më shumë në JSON të strukturuar. Me foto, vision AI identifikon llojin dhe atributet vizuale."
+        "title": "2 — AI analizon qëllimin",
+        "body": "NLP dhe vision nxjerrin atribute: kategori, markë, model, ngjyrë, çmim, numër, veçori — si asistent profesional blerjeje."
+      },
+      "expand": {
+        "title": "3 — Zgjerim semantik",
+        "body": "AI shkon përtej fjalëve të sakta: ngjyra të ngjashme, versione, vite dhe koncepte të lidhura për përputhje më të zgjuara."
+      },
+      "geo": {
+        "title": "4 — Prioritet vendndodhjeje",
+        "body": "Gjeolokacion IP falas. Së pari vendi yt, pastaj fqinjët, EU/bota — p.sh. Kosovë → Shqipëri & rajon → Gjermani → botë."
       },
       "search": {
-        "title": "Marketplace kërkohen",
-        "body": "Powerbook kërkon në ofrues mock (dhe live në të ardhmen) në paralel, të filtruar sipas zonës dhe kritereve të nxjerra nga AI."
+        "title": "5 — Kërkim në të gjithë internetin",
+        "body": "Agregatorët pyesin eBay, Google Shopping, dyqane rajonale dhe dataset-e. Arkitektura lejon API dhe lidhës të rinj."
       },
       "rank": {
-        "title": "Rezultatet renditen për ty",
-        "body": "Çdo listim merr pikë relevancë. Sheh pse AI e zgjodhi, aplikon filtra inteligjentë dhe hap përputhjet më të mira — të renditura, jo vetëm të listuara."
+        "title": "6 — Renditje AI",
+        "body": "Rezultatet me pikë relevancë, burim dhe «pse përputhet» — jo renditje vetëm sipas çmimit më të ulët."
+      },
+      "filters": {
+        "title": "7 — Filtra dinamikë (live)",
+        "body": "Pas rezultateve shfaqen filtra sipas kategorisë. Ndryshon çmimin, numrin, vitin, zhanrin — rezultatet përditësohen pa ringarkuar faqen."
       }
     },
     "features": {
@@ -134,6 +163,7 @@
     "fuel": "Karburanti",
     "genre": "Zhanri",
     "condition": "Gjendja",
-    "max_price": "Çmimi max"
+    "max_price": "Çmimi max",
+    "size": "Numri (EU)"
   }
 }

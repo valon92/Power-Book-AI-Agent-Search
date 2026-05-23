@@ -33,6 +33,21 @@
       </section>
 
       <section class="mb-6">
+        <h2 class="text-sm font-semibold uppercase tracking-wider text-violet-400/90 mb-4 px-1">
+          {{ t('how.principles_title') }}
+        </h2>
+        <div class="grid sm:grid-cols-2 gap-3">
+          <div
+            v-for="key in principleKeys"
+            :key="key"
+            class="glass-card p-4 text-sm text-slate-400 leading-relaxed"
+          >
+            <span class="text-sky-400 font-medium">{{ t(`how.principles.${key}`) }}</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="mb-6">
         <h2 class="text-sm font-semibold uppercase tracking-wider text-sky-400/90 mb-4 px-1">
           {{ t('how.pipeline_title') }}
         </h2>
@@ -89,6 +104,21 @@
         </div>
       </section>
 
+      <section class="glass-card p-6 sm:p-8 mb-6">
+        <h2 class="text-lg font-semibold text-white mb-2">{{ t('how.filter_examples_title') }}</h2>
+        <p class="text-slate-400 text-sm mb-4">{{ t('how.filter_examples_intro') }}</p>
+        <ul class="space-y-2 text-sm">
+          <li
+            v-for="cat in filterExampleKeys"
+            :key="cat"
+            class="flex gap-2 text-slate-400"
+          >
+            <span class="text-sky-400/90 font-medium shrink-0">{{ t(`categories.${cat}`) }}:</span>
+            <span>{{ t(`how.filter_examples.${cat}`) }}</span>
+          </li>
+        </ul>
+      </section>
+
       <section class="glass-card p-6 sm:p-8 mb-10">
         <h2 class="text-lg font-semibold text-white mb-3">{{ t('how.categories_title') }}</h2>
         <p class="text-slate-400 text-sm mb-4">{{ t('how.categories_body') }}</p>
@@ -121,9 +151,15 @@ const { t } = inject('i18n');
 const steps = [
   { key: 'describe', accent: 'how-step-num--sky' },
   { key: 'parse', accent: 'how-step-num--violet' },
+  { key: 'expand', accent: 'how-step-num--violet' },
+  { key: 'geo', accent: 'how-step-num--emerald' },
   { key: 'search', accent: 'how-step-num--emerald' },
   { key: 'rank', accent: 'how-step-num--amber' },
+  { key: 'filters', accent: 'how-step-num--amber' },
 ];
+
+const principleKeys = ['describe', 'stateless', 'local', 'ranked'];
+const filterExampleKeys = ['car', 'book', 'painting', 'electronics', 'fashion'];
 
 const serveItems = ['intent', 'marketplaces', 'ranking', 'links', 'locale', 'privacy'];
 

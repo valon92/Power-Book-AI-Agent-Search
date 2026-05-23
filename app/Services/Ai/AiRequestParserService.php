@@ -2,6 +2,7 @@
 
 namespace App\Services\Ai;
 
+use App\Support\ShoeSize;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -101,6 +102,7 @@ class AiRequestParserService
             'painting' => $this->parsePaintingQuery($query),
             'electronics' => $this->parseElectronicsQuery($query),
             'furniture' => $this->parseFurnitureQuery($query),
+            'fashion', 'luxury' => $this->parseFashionQuery($query),
             'real_estate' => $this->parseRealEstateQuery($query),
             default => $this->parseGenericQuery($query),
         };
@@ -259,9 +261,22 @@ class AiRequestParserService
     /**
      * @return array<string, mixed>
      */
+    private function parseFashionQuery(string $query): array
+    {
+        return array_filter([
+            'product_type' => $this->matchFirst($query, ['sneakers', 'shoes', 'boots', 'trainers', 'patika', 'këpucë', 'kepuce']),
+            'brand' => $this->matchFirst($query, ['adidas', 'nike', 'puma', 'reebok', 'new balance', 'jordan']),
+            'color' => $this->matchFirst($query, ['black', 'white', 'red', 'blue', 'zezë', 'zeze', 'bardhë', 'bardhe']),
+            'size' => ShoeSize::extractFromText($query),
+            'max_price' => $this->extractMaxPrice($query),
+            'condition' => $this->matchFirst($query, ['new', 'used', 'refurbished', 'like new']),
+        ]);
+    }
+
     private function parseGenericQuery(string $query): array
     {
         return array_filter([
+            'size' => ShoeSize::extractFromText($query),
             'max_price' => $this->extractMaxPrice($query),
             'condition' => $this->matchFirst($query, ['new', 'used', 'refurbished', 'like new']),
         ]);

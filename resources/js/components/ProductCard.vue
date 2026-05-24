@@ -1,18 +1,18 @@
 <template>
   <article
-    class="product-card group/card flex flex-col h-full overflow-hidden rounded-xl border border-white/[0.08] bg-slate-900/50 backdrop-blur-sm transition-all duration-200 hover:border-sky-500/25 hover:bg-slate-900/70 hover:shadow-[0_8px_30px_-12px_rgba(56,189,248,0.25)]"
+    class="product-card group/card relative flex flex-col h-full overflow-hidden rounded-xl border border-white/[0.08] bg-slate-900/50 backdrop-blur-sm transition-[border-color,box-shadow,background-color] duration-200 hover:border-sky-500/30 hover:bg-slate-900/75 hover:shadow-[0_10px_32px_-14px_rgba(56,189,248,0.28)]"
   >
-    <div class="relative aspect-square sm:aspect-[4/3] overflow-hidden bg-slate-950/60">
+    <div class="relative aspect-square sm:aspect-[4/3] overflow-hidden bg-slate-950/60 shrink-0">
       <img
         :src="product.image"
-        :alt="product.title"
-        class="h-full w-full object-cover transition-transform duration-300 group-hover/card:scale-[1.03]"
+        :alt="displayTitle"
+        class="h-full w-full object-cover transition-transform duration-300 group-hover/card:scale-[1.04]"
         loading="lazy"
       />
-      <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent pointer-events-none" />
+      <div class="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/10 to-transparent pointer-events-none" />
 
       <span
-        class="absolute top-2 right-2 px-1.5 py-0.5 rounded-md text-[10px] font-bold backdrop-blur-md"
+        class="absolute top-1.5 right-1.5 px-1 py-px rounded text-[9px] font-semibold tabular-nums backdrop-blur-md"
         :class="scoreClass"
       >
         {{ product.match_score }}%
@@ -20,91 +20,65 @@
 
       <span
         v-if="product.live"
-        class="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[9px] uppercase tracking-wider bg-emerald-500/90 text-black font-semibold"
+        class="absolute top-1.5 left-1.5 px-1 py-px rounded text-[8px] uppercase tracking-wide bg-emerald-500/90 text-black font-semibold"
       >
         Live
       </span>
       <span
         v-else-if="product.sponsored"
-        class="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[9px] uppercase tracking-wider bg-amber-500/90 text-black font-semibold"
+        class="absolute top-1.5 left-1.5 px-1 py-px rounded text-[8px] uppercase tracking-wide bg-amber-500/90 text-black font-semibold"
       >
         Ad
       </span>
 
       <span
-        class="absolute bottom-2 left-2 max-w-[calc(100%-1rem)] truncate px-2 py-0.5 rounded-md text-[10px] font-medium bg-black/55 text-slate-200 backdrop-blur-sm border border-white/10"
+        v-if="product.source"
+        class="absolute bottom-1.5 left-1.5 max-w-[calc(100%-2.5rem)] truncate px-1.5 py-0.5 rounded text-[9px] font-medium bg-black/60 text-slate-200 backdrop-blur-sm border border-white/10"
       >
         {{ product.source }}
       </span>
     </div>
 
-    <div class="flex flex-col flex-1 p-2.5 sm:p-3 gap-1.5 min-h-0">
-      <h3 class="text-xs sm:text-sm font-medium text-white leading-snug line-clamp-2 min-h-[2.5rem]">
-        {{ product.title }}
+    <div class="relative flex flex-col flex-1 p-2 gap-1 min-h-0 pr-9">
+      <h3
+        class="text-[11px] leading-[1.35] font-medium text-slate-100 line-clamp-2 tracking-tight"
+        :title="displayTitle"
+      >
+        {{ displayTitle }}
       </h3>
 
-      <div class="flex items-baseline justify-between gap-2">
-        <p class="text-base sm:text-lg font-bold text-sky-400 tabular-nums tracking-tight">
+      <div class="flex items-center gap-1.5 flex-wrap mt-auto">
+        <p class="text-[13px] font-semibold text-sky-400 tabular-nums leading-none">
           {{ formatPrice(product.price, product.currency) }}
         </p>
         <span
           v-if="product.offer_count > 1"
-          class="shrink-0 px-1.5 py-0.5 rounded text-[9px] font-medium bg-sky-500/15 text-sky-300 border border-sky-500/20"
+          class="px-1 py-px rounded text-[8px] font-medium text-sky-300/90 bg-sky-500/10 border border-sky-500/15"
         >
-          {{ product.offer_count }} {{ t('offers') }}
+          +{{ product.offer_count - 1 }}
         </span>
       </div>
 
-      <p class="text-[10px] sm:text-[11px] text-slate-500 truncate">
+      <p
+        v-if="product.location"
+        class="text-[9px] text-slate-500 truncate leading-tight"
+      >
         {{ product.location }}
       </p>
-
-      <p
-        v-if="product.meta_label"
-        class="text-[10px] text-emerald-400/90 truncate"
-        :title="product.meta_label"
-      >
-        {{ product.meta_label }}
-      </p>
-
-      <p
-        v-if="product.ai_explanation"
-        class="hidden lg:block text-[10px] text-slate-500 line-clamp-1 group-hover/card:line-clamp-2 transition-all"
-        :title="product.ai_explanation"
-      >
-        <span class="text-violet-400/80 font-medium">{{ t('why_ai') }}:</span>
-        {{ product.ai_explanation }}
-      </p>
-
-      <div
-        v-if="alternateOffers.length"
-        class="hidden xl:grid gap-1 opacity-0 max-h-0 overflow-hidden group-hover/card:opacity-100 group-hover/card:max-h-24 group-hover/card:py-1 transition-all duration-200"
-      >
-        <p class="text-[9px] uppercase tracking-wider text-slate-500">{{ t('compare_prices') }}</p>
-        <div
-          v-for="(offer, idx) in alternateOffers.slice(0, 2)"
-          :key="idx"
-          class="flex items-center justify-between text-[10px] gap-1"
-        >
-          <span class="text-slate-400 truncate">{{ offer.source }}</span>
-          <span class="text-sky-400 tabular-nums shrink-0">{{ formatPrice(offer.price, offer.currency) }}</span>
-        </div>
-      </div>
-
-      <div class="mt-auto pt-1">
-        <a
-          :href="product.url"
-          target="_blank"
-          rel="noopener noreferrer sponsored"
-          class="flex items-center justify-center gap-1 w-full py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-xs font-semibold text-white bg-gradient-to-r from-sky-600/90 to-violet-600/90 hover:from-sky-500 hover:to-violet-500 border border-white/10 transition-all active:scale-[0.98]"
-        >
-          {{ t('buy') }}
-          <svg class="w-3 h-3 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-          </svg>
-        </a>
-      </div>
     </div>
+
+    <a
+      :href="product.url"
+      target="_blank"
+      rel="noopener noreferrer sponsored"
+      class="absolute bottom-2 right-2 z-10 flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-slate-800/80 text-slate-400 backdrop-blur-sm transition-all duration-200 hover:border-sky-500/40 hover:bg-sky-500/15 hover:text-sky-300 group-hover/card:translate-x-0.5 group-hover/card:border-sky-500/30"
+      :aria-label="listingAriaLabel"
+      @click.stop
+    >
+      <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+      </svg>
+    </a>
   </article>
 </template>
 
@@ -124,11 +98,58 @@ const scoreClass = computed(() => {
   return 'bg-slate-700/90 text-slate-200';
 });
 
-const alternateOffers = computed(() => {
-  const offers = props.product.offers || [];
-  if (offers.length <= 1) return [];
-  return offers.slice(1, 4);
+const displayTitle = computed(() => stripStoreFromTitle(props.product.title, props.product.source));
+
+const listingAriaLabel = computed(() => {
+  const label = t('buy');
+  return `${label}: ${displayTitle.value}`;
 });
+
+function stripStoreFromTitle(title, source) {
+  if (!title) return '';
+  let result = title.trim();
+  const sourceKey = normalizeKey(source);
+
+  for (const sep of [' — ', ' · ', ' - ']) {
+    const idx = result.lastIndexOf(sep);
+    if (idx <= 0) continue;
+
+    const suffix = result.slice(idx + sep.length);
+    const suffixKey = normalizeKey(suffix);
+
+    if (!suffixKey) continue;
+
+    const matchesSource =
+      sourceKey &&
+      (suffixKey.includes(sourceKey) ||
+        sourceKey.includes(suffixKey) ||
+        sharesToken(suffixKey, sourceKey));
+
+    const looksLikeStore =
+      /(merrjep|dyqani|pazar\s*3|gjirafa|neptun|aza\s*electronics|focus\s*electronics|pc\s*store|sparkle|tregu\.com|ebay|amazon|etsy|auto\s*scout|mobile\.de)/i.test(
+        suffix
+      );
+
+    if (matchesSource || looksLikeStore) {
+      result = result.slice(0, idx).trim();
+      break;
+    }
+  }
+
+  return result.replace(/\s·\s*#\d+\s*$/i, '').replace(/\s{2,}/g, ' ').trim();
+}
+
+function normalizeKey(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '');
+}
+
+function sharesToken(a, b) {
+  if (!a || !b || a.length < 4 || b.length < 4) return false;
+  const min = Math.min(a.length, b.length, 8);
+  return a.slice(0, min) === b.slice(0, min);
+}
 
 function formatPrice(price, currency = 'EUR') {
   return new Intl.NumberFormat('en-EU', { style: 'currency', currency }).format(price);

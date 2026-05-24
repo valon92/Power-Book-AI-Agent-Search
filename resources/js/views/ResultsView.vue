@@ -157,12 +157,6 @@
         </div>
       </div>
 
-      <SearchPipeline
-        v-if="data?.pipeline?.length || data?.meta?.source_report?.length"
-        :pipeline="data.pipeline"
-        :report="data.meta?.source_report || []"
-      />
-
       <div class="lg:grid lg:grid-cols-[minmax(200px,220px)_1fr] xl:grid-cols-[minmax(200px,240px)_1fr] gap-4 xl:gap-5">
         <DynamicFilters
           v-if="data?.filters?.length"
@@ -217,7 +211,6 @@ import ProductCard from '../components/ProductCard.vue';
 import DynamicFilters from '../components/DynamicFilters.vue';
 import ResultsSkeleton from '../components/ResultsSkeleton.vue';
 import SearchScopeChips from '../components/SearchScopeChips.vue';
-import SearchPipeline from '../components/SearchPipeline.vue';
 
 const route = useRoute();
 const router = useRouter();

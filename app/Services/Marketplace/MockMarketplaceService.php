@@ -3,6 +3,8 @@
 namespace App\Services\Marketplace;
 
 use App\Contracts\MarketplaceSearchInterface;
+use App\Support\CategoryCatalog;
+use App\Support\SwissCarMarketplaces;
 use Illuminate\Support\Facades\File;
 
 /**
@@ -30,11 +32,11 @@ class MockMarketplaceService implements MarketplaceSearchInterface
      */
     public function search(array $parsedQuery, array $expandedFilters): array
     {
-        $category = $parsedQuery['category'] ?? 'marketplace';
+        $category = CategoryCatalog::normalize($parsedQuery['category'] ?? 'marketplace');
         $dataset = $this->loadDataset($category);
         $marketplaces = $expandedFilters['marketplaces'] ?? [];
 
-        if (! empty($marketplaces) && ! in_array($this->mapSourceToKey(), $marketplaces, true)) {
+        if (! empty($marketplaces) && ! SwissCarMarketplaces::isTarget($this->source, $marketplaces)) {
             $sourceKey = $this->mapSourceToKey();
             $allowed = false;
             foreach ($marketplaces as $mp) {
@@ -54,6 +56,7 @@ class MockMarketplaceService implements MarketplaceSearchInterface
         return array_map(function (array $item) {
             $item['source'] = $this->displaySourceName();
             $item['source_key'] = $this->source;
+            $item['url'] = $this->listingUrl($item['url'] ?? null);
             $item['affiliate_ready'] = true;
             $item['sponsored'] = (bool) ($item['sponsored'] ?? false);
             $item['live'] = $this->source === 'driloni';
@@ -67,7 +70,8 @@ class MockMarketplaceService implements MarketplaceSearchInterface
      */
     private function loadDataset(string $category): array
     {
-        $path = storage_path("data/products/{$category}.json");
+        $key = CategoryCatalog::datasetKey($category);
+        $path = storage_path("data/products/{$key}.json");
         if (! File::exists($path)) {
             $path = storage_path('data/products/marketplace.json');
         }
@@ -103,27 +107,25 @@ class MockMarketplaceService implements MarketplaceSearchInterface
      */
     private function filterForIntent(array $items, array $parsed): array
     {
-        if (($parsed['category'] ?? '') !== 'car') {
-            return $items;
-        }
-
         return array_values(array_filter($items, function (array $item) use ($parsed) {
-            if (! empty($parsed['search_country_code']) && ! $this->locationMatchesCountry($item, (string) $parsed['search_country_code'])) {
-                return false;
-            }
-
-            if (! empty($parsed['model'])) {
-                $wanted = mb_strtolower((string) $parsed['model']);
-                $title = mb_strtolower($item['title'] ?? '');
-                $tags = array_map('mb_strtolower', $item['tags'] ?? []);
-                if (! str_contains(str_replace(' ', '', $title), str_replace(' ', '', $wanted))
-                    && ! in_array($wanted, $tags, true)) {
+            if (CategoryCatalog::isAutomotive($parsed['category'] ?? '')) {
+                if (! empty($parsed['search_country_code']) && ! $this->locationMatchesCountry($item, (string) $parsed['search_country_code'])) {
                     return false;
                 }
-            }
 
-            if (! empty($parsed['year']) && ! empty($item['year']) && (int) $item['year'] !== (int) $parsed['year']) {
-                return false;
+                if (! empty($parsed['model'])) {
+                    $wanted = mb_strtolower((string) $parsed['model']);
+                    $title = mb_strtolower($item['title'] ?? '');
+                    $tags = array_map('mb_strtolower', $item['tags'] ?? []);
+                    if (! str_contains(str_replace(' ', '', $title), str_replace(' ', '', $wanted))
+                        && ! in_array($wanted, $tags, true)) {
+                        return false;
+                    }
+                }
+
+                if (! empty($parsed['year']) && ! empty($item['year']) && (int) $item['year'] !== (int) $parsed['year']) {
+                    return false;
+                }
             }
 
             if (! empty($parsed['max_price']) && ! empty($item['price'])) {
@@ -164,18 +166,32 @@ class MockMarketplaceService implements MarketplaceSearchInterface
 
     private function displaySourceName(): string
     {
+        if (SwissCarMarketplaces::url($this->source)) {
+            return SwissCarMarketplaces::label($this->source);
+        }
+
         return match ($this->source) {
             'mobile.de' => 'mobile.de',
-            'autoscout24' => 'AutoScout24',
+            'autoscout24', 'autoscout24_ch' => 'AutoScout24 Switzerland',
             'ebay' => 'eBay',
             'etsy' => 'Etsy',
             'amazon' => 'Amazon',
             'google_shopping' => 'Google Shopping',
             'facebook_marketplace' => 'Facebook Marketplace',
             'driloni' => 'Driloni Sportswear',
-            'tutti' => 'tutti.ch',
-            'ricardo' => 'Ricardo',
-            default => ucfirst($this->source),
+            'tutti' => 'Tutti.ch',
+            'ricardo' => 'Ricardo.ch',
+            default => ucfirst(str_replace('_', ' ', $this->source)),
         };
+    }
+
+    private function listingUrl(?string $fallback): string
+    {
+        $catalogUrl = SwissCarMarketplaces::url($this->source);
+        if ($catalogUrl) {
+            return $catalogUrl;
+        }
+
+        return $fallback ?: '#';
     }
 }

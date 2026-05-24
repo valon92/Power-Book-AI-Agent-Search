@@ -31,6 +31,72 @@
     "location": "eBay EU",
     "condition": "refurbished",
     "url": "https://ebay.com",
-    "tags": ["laptop", "quiet_cooling", "long_battery"]
+    "tags": ["laptop", "apple", "macbook", "quiet_cooling", "long_battery"]
+  },
+  {
+    "id": "elec-iphone-001",
+    "title": "Apple iPhone 13 Pro Max 128GB — Graphite Black (Used)",
+    "image": "https://images.unsplash.com/photo-1632661671477-6828aa795b66?w=800&q=80",
+    "price": 449,
+    "currency": "EUR",
+    "location": "eBay EU",
+    "condition": "used",
+    "url": "https://ebay.com",
+    "tags": ["phone", "apple", "iphone", "128GB", "black"]
+  },
+  {
+    "id": "elec-iphone-002",
+    "title": "Apple iPhone 13 Pro Max 128GB Black — Excellent Condition",
+    "image": "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=800&q=80",
+    "price": 479,
+    "currency": "EUR",
+    "location": "Amazon DE",
+    "condition": "used",
+    "url": "https://amazon.com",
+    "tags": ["phone", "apple", "iphone", "128GB", "black"]
+  },
+  {
+    "id": "elec-iphone-003",
+    "title": "iPhone 13 Pro Max 128GB — Sierra Blue Refurbished",
+    "image": "https://images.unsplash.com/photo-1678652197831-566ee6530b76?w=800&q=80",
+    "price": 465,
+    "currency": "EUR",
+    "location": "Google Shopping",
+    "condition": "refurbished",
+    "url": "https://google.com/shopping",
+    "tags": ["phone", "apple", "iphone", "128GB", "blue"]
+  },
+  {
+    "id": "elec-iphone-004",
+    "title": "Apple iPhone 13 Pro Max 256GB — Graphite (Used)",
+    "image": "https://images.unsplash.com/photo-1632661671477-6828aa795b66?w=800&q=80",
+    "price": 499,
+    "currency": "EUR",
+    "location": "eBay EU",
+    "condition": "used",
+    "url": "https://ebay.com",
+    "tags": ["phone", "apple", "iphone", "256GB", "black"]
+  },
+  {
+    "id": "elec-iphone-005",
+    "title": "Apple iPhone 13 Pro Max 128GB — Midnight Black Kosovo",
+    "image": "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=800&q=80",
+    "price": 420,
+    "currency": "EUR",
+    "location": "Pristina, Kosovo",
+    "condition": "used",
+    "url": "https://facebook.com/marketplace",
+    "tags": ["phone", "apple", "iphone", "128GB", "black"]
+  },
+  {
+    "id": "elec-iphone-006",
+    "title": "Apple iPhone 13 Pro Max 128GB — Unlocked, Battery 87%",
+    "image": "https://images.unsplash.com/photo-1678652197831-566ee6530b76?w=800&q=80",
+    "price": 389,
+    "currency": "EUR",
+    "location": "Ferizaj, Kosovo",
+    "condition": "used",
+    "url": "https://ebay.com",
+    "tags": ["phone", "apple", "iphone", "128GB", "black"]
   }
 ]

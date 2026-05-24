@@ -2,6 +2,7 @@
 
 namespace App\Services\Ai;
 
+use App\Support\CategoryCatalog;
 use App\Support\SearchLocale;
 
 /**
@@ -12,13 +13,14 @@ class ParserPrompts
     public static function system(?string $locale = 'en'): string
     {
         $lang = SearchLocale::descriptionLanguage($locale);
+        $categories = implode('|', array_merge(CategoryCatalog::slugs(), ['marketplace']));
 
         return <<<PROMPT
 You are Powerbook.ai shopping intent parser. Convert natural language product search queries into structured JSON.
 
 Return ONLY valid JSON with this shape:
 {
-  "category": "car|book|painting|electronics|furniture|collectibles|fashion|real_estate|luxury|gift|marketplace",
+  "category": "{$categories}",
   "description": "one-sentence buyer-facing summary in {$lang}",
   "keywords": ["word1", "word2"],
   "language_hint": "en|sq|de|fr|it|es",
@@ -49,11 +51,39 @@ Return ONLY valid JSON with this shape:
   "near_landmark": null,
   "property_type": "apartment|house|land",
   "min_sqm": null,
-  "nearby_streets": []
+  "nearby_streets": [],
+  "storage": null,
+  "ram": null,
+  "gender": null,
+  "appliance_type": null,
+  "energy_class": null,
+  "dietary": null,
+  "skin_type": null,
+  "platform": null,
+  "billing": null,
+  "use_case": null,
+  "material_type": null,
+  "tool_type": null,
+  "level": null,
+  "format": null,
+  "destination": null,
+  "travel_type": null,
+  "travelers": null,
+  "pet_type": null,
+  "sport_type": null,
+  "equipment_type": null,
+  "industry": null,
+  "media_type": null,
+  "authenticity": null,
+  "seller_type": null,
+  "item": null,
+  "quantity": null,
+  "language": null
 }
 
 Rules:
-- category: best match for intent
+- category: pick ONE best match from the list. Use automotive for cars, electronics_tech for phones/laptops, fashion for clothing/shoes, real_estate for apartments/houses, etc.
+- Set category-specific fields only (e.g. automotive: brand, model, year, max_km, fuel; fashion: size, brand, gender; travel: destination, travel_type)
 - max_km: integer kilometers for cars (180k km => 180000)
 - year: integer if mentioned
 - keywords: 3-8 relevant terms, lowercase
@@ -65,10 +95,12 @@ Rules:
 - min_sqm: integer area (120m => 120)
 - Albanian: banes=apartment, gjykata=courthouse, Ferizaj=city
 - fashion/shoes: size or shoe_size as EU number string (e.g. 42, 42.5, 43) when mentioned
+- fashion: extract brand (puma, nike), color (Albanian: kalter/kaltër=blue, bardh/bardhë=white, zezë=black), product_type (patika=sneakers). Multiple colors => color "multicolor"
 - cars: model must match query exactly (Q5 not A6). year as integer.
-- search_country / search_country_code: where the buyer wants to BUY (not their IP). "ne zvicerr", "in Switzerland" => search_country Switzerland, search_country_code CH
+- search_country / search_country_code: ONLY when buyer names where to buy. "ne zvicerr" => CH. If no place in query, leave null (platform uses visitor IP).
 - max_price + currency: "deri 17500 franga" => max_price 17500, currency CHF. "under 20k euro" => EUR
 - Do NOT set country to visitor hint when query names another country
+- Do NOT infer search_country from visitor IP — that is handled separately
 PROMPT;
     }
 
@@ -82,6 +114,8 @@ PROMPT;
 
     public static function visionUser(string $lang, string $locCtx, string $hint): string
     {
+        $categories = implode('|', array_merge(CategoryCatalog::slugs(), ['marketplace']));
+
         return <<<PROMPT
 Analyze this product image for a semantic shopping search engine.
 {$locCtx}
@@ -91,7 +125,7 @@ Return JSON:
 {
   "description": "detailed product description for the buyer UI in {$lang}",
   "search_query": "optimized short search phrase in English for eBay/Google (brand, model, color, product type)",
-  "category": "car|book|painting|electronics|furniture|fashion|luxury|collectibles|gift|marketplace",
+  "category": "{$categories}",
   "brand": null,
   "model": null,
   "color": null,

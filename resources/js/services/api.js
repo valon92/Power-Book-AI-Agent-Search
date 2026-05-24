@@ -44,7 +44,15 @@ export const api = {
   getTrending: () => request('/trending'),
   getExamples: () => request('/examples'),
 
-  search: (query, filters = {}, locale = null, imageBase64 = null, locationScope = null) =>
+  search: (
+    query,
+    filters = {},
+    locale = null,
+    imageBase64 = null,
+    locationScope = null,
+    page = 1,
+    perPage = 12
+  ) =>
     request('/search', {
       method: 'POST',
       body: JSON.stringify({
@@ -53,6 +61,8 @@ export const api = {
         locale,
         image: imageBase64 || null,
         location_scope: locationScope || api.getLocationScope(),
+        page,
+        per_page: perPage,
       }),
     }),
 

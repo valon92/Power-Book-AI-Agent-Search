@@ -19,6 +19,8 @@ class SearchController extends Controller
             'locale' => 'nullable|string|in:en,sq',
             'location_scope' => 'nullable|string|in:auto,city,local,country,region,world,universal,global',
             'filters' => 'nullable',
+            'page' => 'nullable|integer|min:1|max:50',
+            'per_page' => 'nullable|integer|min:6|max:36',
         ]);
 
         $query = trim($validated['q'] ?? '');
@@ -43,6 +45,8 @@ class SearchController extends Controller
             $validated['locale'] ?? null,
             $image,
             $validated['location_scope'] ?? 'auto',
+            (int) ($validated['page'] ?? 1),
+            (int) ($validated['per_page'] ?? 12),
         );
 
         return response()->json($result);

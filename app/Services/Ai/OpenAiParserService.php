@@ -2,6 +2,7 @@
 
 namespace App\Services\Ai;
 
+use App\Support\CategoryCatalog;
 use App\Support\ShoeSize;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -65,12 +66,9 @@ class OpenAiParserService
      */
     public function normalizeDecoded(array $decoded, string $query, ?string $country, string $parser = 'openai'): array
     {
-        $allowed = [
-            'car', 'book', 'painting', 'electronics', 'furniture',
-            'collectibles', 'fashion', 'real_estate', 'luxury', 'gift', 'marketplace',
-        ];
+        $allowed = array_merge(CategoryCatalog::slugs(), ['marketplace']);
 
-        $category = $decoded['category'] ?? 'marketplace';
+        $category = CategoryCatalog::normalize($decoded['category'] ?? 'marketplace');
         if (! in_array($category, $allowed, true)) {
             $category = 'marketplace';
         }
@@ -84,13 +82,7 @@ class OpenAiParserService
             'parser' => $parser,
         ];
 
-        $optional = [
-            'description', 'brand', 'model', 'year', 'color', 'max_km', 'transmission', 'fuel',
-            'genre', 'product_type', 'features', 'max_price', 'condition',
-            'style', 'size', 'shoe_size', 'room', 'subject', 'bedrooms', 'listing_type', 'length', 'ending', 'item',
-            'city', 'landmark', 'near_landmark', 'property_type', 'min_sqm', 'nearby_streets',
-            'currency', 'search_country', 'search_country_code',
-        ];
+        $optional = CategoryCatalog::parsedFieldKeys();
 
         foreach ($optional as $key) {
             if (array_key_exists($key, $decoded) && $decoded[$key] !== null && $decoded[$key] !== '') {
@@ -112,7 +104,7 @@ class OpenAiParserService
         }
 
         $size = ShoeSize::normalize($result['size'] ?? null)
-            ?? ShoeSize::normalize($result['shoe_size'] ?? null);
+            ?? ShoeSize::normalize($decoded['shoe_size'] ?? null);
         if ($size !== null) {
             $result['size'] = $size;
         }

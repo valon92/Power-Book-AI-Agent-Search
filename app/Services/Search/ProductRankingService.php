@@ -2,6 +2,7 @@
 
 namespace App\Services\Search;
 
+use App\Support\CategoryCatalog;
 use App\Support\ShoeSize;
 
 /**
@@ -50,6 +51,14 @@ class ProductRankingService
         if (! empty($parsed['color']) && (str_contains($title, $parsed['color']) || in_array($parsed['color'], $tags, true))) {
             $score += 8;
         }
+        if (! empty($parsed['storage'])) {
+            $storage = strtoupper((string) $parsed['storage']);
+            $titleUpper = strtoupper($product['title'] ?? '');
+            $tagsUpper = array_map('strtoupper', $product['tags'] ?? []);
+            if (str_contains($titleUpper, $storage) || in_array($storage, $tagsUpper, true)) {
+                $score += 14;
+            }
+        }
         if (! empty($parsed['max_km']) && ! empty($product['mileage']) && $product['mileage'] <= $parsed['max_km']) {
             $score += 10;
         }
@@ -91,7 +100,7 @@ class ProductRankingService
      */
     private function scoreModel(array $product, array $parsed, string $title, array $tags): int
     {
-        if (empty($parsed['model']) || ($parsed['category'] ?? '') !== 'car') {
+        if (empty($parsed['model']) || ! CategoryCatalog::isAutomotive($parsed['category'] ?? '')) {
             if (! empty($parsed['model']) && (str_contains($title, mb_strtolower($parsed['model'])) || in_array(mb_strtolower($parsed['model']), $tags, true))) {
                 return 12;
             }
@@ -159,6 +168,10 @@ class ProductRankingService
             if (str_contains($location, 'switzerland') || str_contains($location, 'schweiz') || str_contains($location, 'zürich') || str_contains($location, 'zurich') || str_contains($location, 'bern') || str_contains($location, 'geneva')) {
                 return 22;
             }
+        }
+
+        if (! empty($parsed['search_target']) && ($parsed['location_source'] ?? '') === 'query') {
+            return -24;
         }
 
         return -10;

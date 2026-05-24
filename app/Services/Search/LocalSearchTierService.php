@@ -65,6 +65,17 @@ class LocalSearchTierService
         $code = strtoupper((string) ($parsed['search_country_code'] ?? ''));
         if ($code !== '') {
             $country = (string) ($parsed['search_country'] ?? $this->countryLabel($code));
+            $scope = strtolower($scope);
+
+            if (($parsed['search_target'] ?? false) && in_array($scope, ['auto', '', 'country'], true)) {
+                return [
+                    [
+                        'level' => 'country',
+                        'label' => $country,
+                        'suffix' => $country,
+                    ],
+                ];
+            }
 
             return $this->tiersForCountryScope($code, $country, $scope);
         }

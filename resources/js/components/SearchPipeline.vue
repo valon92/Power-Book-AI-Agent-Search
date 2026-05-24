@@ -26,7 +26,7 @@
         :class="badgeClass(row.mode)"
       >
         <span class="w-1.5 h-1.5 rounded-full" :class="dotClass(row.mode)" />
-        {{ row.source }}
+        {{ row.label || row.source }}
         <span class="opacity-70">({{ row.count }})</span>
       </span>
     </div>
@@ -44,6 +44,9 @@ defineProps({
 const { t } = inject('i18n');
 
 function stepLabel(step) {
+  if (step.label) {
+    return step.label;
+  }
   const key = `pipeline_${step.step}`;
   const translated = t(key);
   return translated !== key ? translated : step.label;

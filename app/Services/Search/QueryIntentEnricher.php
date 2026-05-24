@@ -2,12 +2,14 @@
 
 namespace App\Services\Search;
 
+use App\Support\CategoryCatalog;
+use App\Support\ElectronicsIntentParser;
+use App\Support\FashionIntentParser;
 use App\Support\PriceIntentParser;
 use App\Support\SearchCountryResolver;
 
 /**
- * Merges rule-based location/price/model intent into AI-parsed attributes.
- * Query text wins over visitor geo when the buyer names a country, currency, or model.
+ * Location policy: query-named country wins; otherwise visitor IP geo.
  */
 class QueryIntentEnricher
 {
@@ -21,7 +23,13 @@ class QueryIntentEnricher
         if (! empty($countryFromQuery['search_country_code'])) {
             $parsed = array_merge($parsed, $countryFromQuery);
             $parsed['country'] = $countryFromQuery['search_country'];
+        } elseif (! empty($parsed['search_country_code'])) {
+            $parsed['search_target'] = true;
+            $parsed['country'] = $parsed['search_country'] ?? $parsed['country'] ?? null;
         }
+
+        $parsed['search_target'] = ! empty($parsed['search_country_code']);
+        $parsed['location_source'] = $parsed['search_target'] ? 'query' : 'ip';
 
         $priceFromQuery = PriceIntentParser::fromQuery($rawQuery);
         if (! empty($priceFromQuery['max_price'])) {
@@ -35,11 +43,68 @@ class QueryIntentEnricher
             $parsed['model'] = strtoupper($m[1]);
         }
 
-        if (($parsed['category'] ?? '') === 'car' && empty($parsed['currency'])) {
+        if (CategoryCatalog::isAutomotive($parsed['category'] ?? '') && empty($parsed['currency'])) {
             $parsed['currency'] = 'EUR';
         }
 
+        $parsed = self::mergeFashionIntent($parsed, $rawQuery);
+        $parsed = self::mergeElectronicsIntent($parsed, $rawQuery);
+
         return array_filter($parsed, fn ($v) => $v !== null && $v !== '' && $v !== []);
+    }
+
+    /**
+     * @param  array<string, mixed>  $parsed
+     * @return array<string, mixed>
+     */
+    private static function mergeElectronicsIntent(array $parsed, string $rawQuery): array
+    {
+        $electronics = ElectronicsIntentParser::fromQuery($rawQuery);
+        if ($electronics === []) {
+            return $parsed;
+        }
+
+        foreach ($electronics as $key => $value) {
+            if (empty($parsed[$key])) {
+                $parsed[$key] = $value;
+            }
+        }
+
+        if (! empty($parsed['color']) && in_array($parsed['color'], ['zezë', 'zeze', 'e zezë', 'e zeze'], true)) {
+            $parsed['color'] = 'black';
+        }
+
+        $category = CategoryCatalog::normalize($parsed['category'] ?? 'marketplace');
+        if ($category === 'marketplace') {
+            $parsed['category'] = 'electronics_tech';
+        }
+
+        return $parsed;
+    }
+
+    /**
+     * @param  array<string, mixed>  $parsed
+     * @return array<string, mixed>
+     */
+    private static function mergeFashionIntent(array $parsed, string $rawQuery): array
+    {
+        $fashion = FashionIntentParser::fromQuery($rawQuery);
+        if ($fashion === []) {
+            return $parsed;
+        }
+
+        foreach ($fashion as $key => $value) {
+            if (empty($parsed[$key])) {
+                $parsed[$key] = $value;
+            }
+        }
+
+        $category = CategoryCatalog::normalize($parsed['category'] ?? 'marketplace');
+        if ($category === 'marketplace' || $category === 'sports_outdoor') {
+            $parsed['category'] = 'fashion';
+        }
+
+        return $parsed;
     }
 
     /**
@@ -49,7 +114,7 @@ class QueryIntentEnricher
      */
     public function searchGeo(array $visitorGeo, array $parsed): array
     {
-        if (empty($parsed['search_country_code'])) {
+        if (empty($parsed['search_target'])) {
             return $visitorGeo;
         }
 
@@ -58,6 +123,82 @@ class QueryIntentEnricher
             'country_code' => $parsed['search_country_code'],
             'city' => null,
             'search_target' => true,
+            'location_source' => 'query',
         ]);
+    }
+
+    /**
+     * Parsed attributes used for ranking (IP country when buyer did not name a place).
+     *
+     * @param  array<string, mixed>  $parsed
+     * @param  array<string, mixed>  $visitorGeo
+     * @return array<string, mixed>
+     */
+    public function rankingContext(array $parsed, array $visitorGeo): array
+    {
+        if (! empty($parsed['search_target'])) {
+            return $parsed;
+        }
+
+        return array_merge($parsed, array_filter([
+            'search_country' => $visitorGeo['country'] ?? null,
+            'search_country_code' => $visitorGeo['country_code'] ?? null,
+        ]));
+    }
+
+    /**
+     * @param  array<string, mixed>  $parsed
+     * @param  array<string, mixed>  $visitorGeo
+     * @param  array<string, mixed>  $searchGeo
+     * @return array<string, mixed>
+     */
+    public function locationMeta(array $parsed, array $visitorGeo, array $searchGeo): array
+    {
+        if (! empty($parsed['search_target'])) {
+            return [
+                'mode' => 'query',
+                'label' => $parsed['search_country'] ?? $searchGeo['country'] ?? '',
+                'target_country' => $parsed['search_country'] ?? null,
+                'target_country_code' => $parsed['search_country_code'] ?? null,
+                'visitor_city' => $visitorGeo['city'] ?? null,
+                'visitor_country' => $visitorGeo['country'] ?? null,
+            ];
+        }
+
+        $city = $visitorGeo['city'] ?? null;
+        $country = $visitorGeo['country'] ?? null;
+
+        return [
+            'mode' => 'ip',
+            'label' => trim(($city ? $city.', ' : '').($country ?? '')),
+            'target_country' => null,
+            'target_country_code' => null,
+            'visitor_city' => $city,
+            'visitor_country' => $country,
+        ];
+    }
+
+    /**
+     * Default client filters merged before search (country lock when buyer named a place).
+     *
+     * @param  array<string, mixed>  $parsed
+     * @param  array<string, mixed>  $clientFilters
+     * @return array<string, mixed>
+     */
+    public function mergeDefaultFilters(array $parsed, array $clientFilters): array
+    {
+        $defaults = [];
+
+        if (! empty($parsed['search_target']) && ! empty($parsed['search_country'])) {
+            $defaults['country'] = $parsed['search_country'];
+        }
+
+        if (! empty($parsed['max_price'])
+            && ! isset($clientFilters['price_max'])
+            && ! isset($clientFilters['price'])) {
+            $defaults['price_max'] = (float) $parsed['max_price'];
+        }
+
+        return array_merge($defaults, $clientFilters);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Services\Search;
 
+use App\Support\CategoryCatalog;
 use App\Support\ShoeSize;
 use App\Services\Ai\AiRequestParserService;
 use App\Services\Ai\ProductVisionService;
@@ -28,6 +29,7 @@ class SearchOrchestratorService
         private EbayOAuthService $ebayOAuth,
         private SerpApiShoppingService $serpApi,
         private QueryIntentEnricher $intentEnricher,
+        private SearchResultPoolService $resultPool,
     ) {}
 
     /**
@@ -40,6 +42,8 @@ class SearchOrchestratorService
         ?string $locale = null,
         ?string $imageBase64 = null,
         ?string $locationScope = 'auto',
+        int $page = 1,
+        int $perPage = 12,
     ): array {
         $started = microtime(true);
         $geo = $this->geo->resolve();
@@ -84,8 +88,14 @@ class SearchOrchestratorService
             $parsed['raw_query'] = $visionAnalysis['search_query'] ?? $parsed['raw_query'];
         }
         $parsed = $this->intentEnricher->enrich($parsed, $query);
+        $parsed['category'] = CategoryCatalog::normalize($parsed['category'] ?? 'marketplace');
         $searchGeo = $this->intentEnricher->searchGeo($geo, $parsed);
-        $parsed['country'] = $parsed['search_country'] ?? $parsed['country'] ?? $geo['country'];
+        if (empty($parsed['search_target'])) {
+            $parsed['country'] = $geo['country'] ?? $parsed['country'] ?? null;
+        } else {
+            $parsed['country'] = $parsed['search_country'] ?? $parsed['country'] ?? $geo['country'];
+        }
+        $filters = $this->intentEnricher->mergeDefaultFilters($parsed, $filters);
         $parsed = $this->landmarks->enrich($parsed, $parsed['raw_query'] ?? $query, $searchGeo, $locale);
         $locationContext = $this->landmarks->locationContext($parsed);
 
@@ -107,14 +117,29 @@ class SearchOrchestratorService
         $products = $search['results'];
         $sourceReport = $search['report'];
 
+        $swissCarSearch = strtoupper((string) ($parsed['search_country_code'] ?? '')) === 'CH'
+            && CategoryCatalog::isAutomotive($parsed['category'] ?? '');
+
         $pipeline[] = [
             'step' => 'internet_search',
             'status' => 'completed',
-            'label' => 'Searched web: '.($parsed['search_country'] ?? $searchGeo['country'] ?? 'local').' → regional',
+            'label' => $swissCarSearch
+                ? 'Searched '.count($expanded['marketplaces'] ?? []).' Swiss car marketplaces'
+                : 'Searched web: '.($parsed['search_country'] ?? $searchGeo['country'] ?? 'local').' → regional',
         ];
 
         $products = $this->applyClientFilters($products, $filters);
-        $products = $this->ranking->rank($products, $parsed);
+        $products = $this->ranking->rank($products, $this->intentEnricher->rankingContext($parsed, $geo));
+        $products = $this->dedupeListings($products);
+        $pool = $this->resultPool->expand($products, $parsed);
+        $pool = $this->applyClientFilters($pool, $filters);
+        $estimatedTotal = $this->resultPool->estimateTotal($parsed, count($pool));
+
+        $page = max(1, $page);
+        $perPage = max(6, min(36, $perPage));
+        $offset = ($page - 1) * $perPage;
+        $pageResults = array_slice($pool, $offset, $perPage);
+        $returnedSoFar = min($offset + count($pageResults), count($pool));
 
         $pipeline[] = [
             'step' => 'rank_results',
@@ -133,13 +158,20 @@ class SearchOrchestratorService
             'geo' => $geo,
             'locale' => in_array($locale, ['sq', 'en'], true) ? $locale : ($geo['locale'] === 'sq' ? 'sq' : 'en'),
             'filters' => $dynamicFilters,
-            'results' => array_slice($products, 0, 24),
+            'results' => $pageResults,
             'meta' => [
-                'total' => count($products),
+                'total' => $estimatedTotal,
+                'pool_size' => count($pool),
+                'page' => $page,
+                'per_page' => $perPage,
+                'has_more' => $returnedSoFar < count($pool),
+                'returned' => count($pageResults),
                 'sources_queried' => $expanded['marketplaces'] ?? [],
+                'marketplace_labels' => $expanded['marketplace_labels'] ?? [],
                 'source_report' => $sourceReport,
                 'location_tiers' => $locationTiers,
                 'location_scope' => $locationScope,
+                'location' => $this->intentEnricher->locationMeta($parsed, $geo, $searchGeo),
                 'processing_ms' => $processingMs,
                 'parser' => $parsed['parser'] ?? 'rules',
                 'has_image' => (bool) $imageBase64,
@@ -204,23 +236,95 @@ class SearchOrchestratorService
                 }
             }
             if (isset($filters['brand']) && $filters['brand'] !== '') {
-                $brand = mb_strtolower((string) $filters['brand']);
-                $title = mb_strtolower($product['title'] ?? '');
-                $tags = array_map('mb_strtolower', $product['tags'] ?? []);
-                if (! str_contains($title, $brand) && ! in_array($brand, $tags, true)) {
+                if (! $this->productMatchesBrand($product, (string) $filters['brand'])) {
                     return false;
                 }
             }
             if (isset($filters['product_type']) && $filters['product_type'] !== '') {
-                $type = mb_strtolower((string) $filters['product_type']);
-                $title = mb_strtolower($product['title'] ?? '');
-                if (! str_contains($title, $type)) {
+                if (! $this->productMatchesType($product, (string) $filters['product_type'])) {
+                    return false;
+                }
+            }
+            if (isset($filters['storage']) && $filters['storage'] !== '') {
+                $storage = strtoupper((string) $filters['storage']);
+                $title = strtoupper($product['title'] ?? '');
+                $tags = array_map('strtoupper', $product['tags'] ?? []);
+                if (! str_contains($title, $storage) && ! in_array($storage, $tags, true)) {
                     return false;
                 }
             }
 
             return true;
         }));
+    }
+
+    /**
+     * @param  array<string, mixed>  $product
+     */
+    private function productMatchesBrand(array $product, string $brand): bool
+    {
+        $brand = mb_strtolower($brand);
+        $needles = match ($brand) {
+            'apple' => ['apple', 'iphone', 'ipad', 'macbook', 'airpods'],
+            'samsung' => ['samsung', 'galaxy'],
+            default => [$brand],
+        };
+        $title = mb_strtolower($product['title'] ?? '');
+        $tags = array_map('mb_strtolower', $product['tags'] ?? []);
+
+        foreach ($needles as $needle) {
+            if (str_contains($title, $needle) || in_array($needle, $tags, true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param  array<string, mixed>  $product
+     */
+    private function productMatchesType(array $product, string $type): bool
+    {
+        $type = mb_strtolower($type);
+        $needles = match ($type) {
+            'phone' => ['phone', 'iphone', 'smartphone', 'galaxy'],
+            'laptop' => ['laptop', 'macbook', 'notebook', 'rog', 'legion'],
+            'tablet' => ['tablet', 'ipad'],
+            'headphones' => ['headphones', 'airpods', 'earbuds'],
+            default => [$type],
+        };
+        $title = mb_strtolower($product['title'] ?? '');
+        $tags = array_map('mb_strtolower', $product['tags'] ?? []);
+
+        foreach ($needles as $needle) {
+            if (str_contains($title, $needle) || in_array($needle, $tags, true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $products
+     * @return array<int, array<string, mixed>>
+     */
+    private function dedupeListings(array $products): array
+    {
+        $seen = [];
+        $unique = [];
+
+        foreach ($products as $product) {
+            $key = ($product['id'] ?? '').'|'.($product['source_key'] ?? '');
+            if (isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+            $unique[] = $product;
+        }
+
+        return $unique;
     }
 
     private function normalizeLocationScope(?string $scope): string

@@ -2,8 +2,8 @@
 
 namespace App\Services\Ai;
 
+use App\Support\CategoryCatalog;
 use App\Support\ShoeSize;
-use Illuminate\Support\Facades\Log;
 
 /**
  * Converts natural-language shopping queries into structured attributes.
@@ -16,22 +16,6 @@ class AiRequestParserService
         private OpenAiParserService $openAi,
         private GeminiParserService $gemini,
     ) {}
-    /** @var array<string, array<string>> */
-    private array $categoryKeywords = [
-        'car' => ['audi', 'bmw', 'mercedes', 'volkswagen', 'toyota', 'honda', 'ford', 'km', 'mileage', 'sedan', 'suv', 'diesel', 'petrol', 'automatic', 'manual'],
-        'book' => ['book', 'novel', 'thriller', 'psychological', 'author', 'paperback', 'hardcover', 'isbn', 'reading'],
-        'painting' => ['painting', 'canvas', 'artwork', 'vintage', 'oil', 'acrylic', 'poster', 'frame'],
-        'electronics' => ['laptop', 'phone', 'gaming', 'gpu', 'cpu', 'tablet', 'headphones', 'monitor', 'battery', 'cooling'],
-        'furniture' => ['sofa', 'chair', 'table', 'desk', 'bed', 'wardrobe', 'couch', 'living room'],
-        'collectibles' => ['collectible', 'vintage', 'rare', 'limited edition', 'coin', 'stamp', 'trading card'],
-        'fashion' => ['dress', 'shoes', 'jacket', 'shirt', 'handbag', 'sneakers', 'watch', 'jewelry'],
-        'real_estate' => [
-            'apartment', 'house', 'flat', 'bedroom', 'sqm', 'm²', 'rent', 'mortgage', 'property',
-            'banes', 'banese', 'banesa', 'apartament', 'patundsh', 'gjykata', 'ferizaj', 'qira', 'blerje',
-        ],
-        'luxury' => ['rolex', 'louis vuitton', 'gucci', 'chanel', 'luxury', 'designer', 'premium'],
-        'gift' => ['gift', 'birthday', 'anniversary', 'present'],
-    ];
 
     /**
      * @return array<string, mixed>
@@ -40,13 +24,21 @@ class AiRequestParserService
     {
         foreach ($this->providers->fallbackOrder() as $provider) {
             try {
-                return match ($provider) {
-                    'gemini' => $this->gemini->parse($query, $country, $locale),
-                    'openai' => $this->openAi->parse($query, $country, $locale),
-                    default => throw new \RuntimeException('Unknown AI provider'),
-                };
+                switch ($provider) {
+                    case 'gemini':
+                        $parsed = $this->gemini->parse($query, $country, $locale);
+                        break;
+                    case 'openai':
+                        $parsed = $this->openAi->parse($query, $country, $locale);
+                        break;
+                    default:
+                        throw new \RuntimeException('Unknown AI provider');
+                }
+                $parsed['category'] = CategoryCatalog::normalize($parsed['category'] ?? 'marketplace');
+
+                return $parsed;
             } catch (\Throwable $e) {
-                Log::warning("{$provider} parser failed, trying next", ['error' => $e->getMessage()]);
+                \Illuminate\Support\Facades\Log::warning("{$provider} parser failed, trying next", ['error' => $e->getMessage()]);
             }
         }
 
@@ -75,20 +67,11 @@ class AiRequestParserService
 
     private function detectCategory(string $query): string
     {
-        $scores = [];
-        foreach ($this->categoryKeywords as $category => $keywords) {
-            $scores[$category] = 0;
-            foreach ($keywords as $keyword) {
-                if (str_contains($query, $keyword)) {
-                    $scores[$category]++;
-                }
-            }
-        }
-
+        $scores = CategoryCatalog::scoreQuery($query);
         arsort($scores);
         $top = array_key_first($scores);
 
-        return ($scores[$top] ?? 0) > 0 ? $top : 'marketplace';
+        return ($scores[$top] ?? 0) > 0 ? CategoryCatalog::normalize($top) : 'marketplace';
     }
 
     /**
@@ -96,16 +79,26 @@ class AiRequestParserService
      */
     private function extractCategoryAttributes(string $query, string $category): array
     {
-        return match ($category) {
-            'car' => $this->parseCarQuery($query),
-            'book' => $this->parseBookQuery($query),
-            'painting' => $this->parsePaintingQuery($query),
-            'electronics' => $this->parseElectronicsQuery($query),
-            'furniture' => $this->parseFurnitureQuery($query),
-            'fashion', 'luxury' => $this->parseFashionQuery($query),
-            'real_estate' => $this->parseRealEstateQuery($query),
-            default => $this->parseGenericQuery($query),
-        };
+        switch (CategoryCatalog::normalize($category)) {
+            case 'automotive':
+                return $this->parseCarQuery($query);
+            case 'online_education':
+                return $this->parseBookQuery($query);
+            case 'luxury_collectibles':
+                return array_merge($this->parsePaintingQuery($query), $this->parseFashionQuery($query));
+            case 'electronics_tech':
+            case 'gaming_entertainment':
+                return $this->parseElectronicsQuery($query);
+            case 'home_furniture':
+                return $this->parseFurnitureQuery($query);
+            case 'fashion':
+            case 'sports_outdoor':
+                return $this->parseFashionQuery($query);
+            case 'real_estate':
+                return $this->parseRealEstateQuery($query);
+            default:
+                return $this->parseGenericQuery($query);
+        }
     }
 
     /**
@@ -117,7 +110,7 @@ class AiRequestParserService
         $data = ['brand' => null, 'model' => null, 'year' => null, 'color' => null, 'max_km' => null, 'transmission' => null, 'fuel' => null];
 
         foreach ($brands as $brand) {
-            if (preg_match('/\b' . preg_quote($brand, '/') . '\b/i', $query, $m)) {
+            if (preg_match('/\b'.preg_quote($brand, '/').'\b/i', $query, $m)) {
                 $data['brand'] = ucfirst(str_replace('vw', 'Volkswagen', strtolower($m[0])));
                 if ($data['brand'] === 'Mercedes-benz') {
                     $data['brand'] = 'Mercedes-Benz';
@@ -174,37 +167,34 @@ class AiRequestParserService
         return array_filter($data, fn ($v) => $v !== null);
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     private function parseBookQuery(string $query): array
     {
         return array_filter([
+            'subject' => $this->matchFirst($query, ['programming', 'business', 'language', 'design', 'marketing']),
+            'format' => $this->matchFirst($query, ['course', 'ebook', 'certification', 'paperback', 'hardcover']),
+            'level' => $this->matchFirst($query, ['beginner', 'intermediate', 'advanced']),
             'genre' => $this->matchFirst($query, ['thriller', 'psychological', 'romance', 'sci-fi', 'fantasy', 'mystery', 'biography']),
-            'length' => str_contains($query, 'short') ? 'short' : (str_contains($query, 'long') ? 'long' : null),
-            'ending' => str_contains($query, 'unexpected ending') || str_contains($query, 'twist') ? 'unexpected' : null,
         ]);
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     private function parsePaintingQuery(string $query): array
     {
         return array_filter([
             'style' => $this->matchFirst($query, ['vintage', 'modern', 'abstract', 'impressionist', 'minimalist']),
             'room' => $this->matchFirst($query, ['living room', 'bedroom', 'office', 'kitchen']),
             'subject' => $this->matchFirst($query, ['flower', 'landscape', 'portrait', 'abstract', 'nature']),
+            'product_type' => $this->matchFirst($query, ['painting', 'art', 'collectible', 'watch', 'coin']),
         ]);
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     private function parseElectronicsQuery(string $query): array
     {
         return array_filter([
-            'product_type' => $this->matchFirst($query, ['laptop', 'phone', 'tablet', 'monitor', 'headphones', 'gpu', 'console']),
+            'product_type' => $this->matchFirst($query, ['laptop', 'phone', 'tablet', 'monitor', 'headphones', 'gpu', 'console', 'game']),
+            'platform' => $this->matchFirst($query, ['ps5', 'xbox', 'pc', 'switch']),
             'features' => array_values(array_filter([
                 str_contains($query, 'battery') ? 'long_battery' : null,
                 str_contains($query, 'quiet') || str_contains($query, 'cooling') ? 'quiet_cooling' : null,
@@ -214,21 +204,18 @@ class AiRequestParserService
         ]);
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     private function parseFurnitureQuery(string $query): array
     {
         return array_filter([
             'item' => $this->matchFirst($query, ['sofa', 'chair', 'table', 'desk', 'bed', 'wardrobe']),
             'room' => $this->matchFirst($query, ['living room', 'bedroom', 'office', 'dining']),
             'style' => $this->matchFirst($query, ['modern', 'scandinavian', 'vintage', 'minimal']),
+            'material_type' => $this->matchFirst($query, ['wood', 'metal', 'fabric', 'leather']),
         ]);
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     private function parseRealEstateQuery(string $query): array
     {
         $lower = mb_strtolower($query);
@@ -261,9 +248,7 @@ class AiRequestParserService
         return array_filter($data);
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     private function parseFashionQuery(string $query): array
     {
         return array_filter([
@@ -276,6 +261,7 @@ class AiRequestParserService
         ]);
     }
 
+    /** @return array<string, mixed> */
     private function parseGenericQuery(string $query): array
     {
         return array_filter([
@@ -308,9 +294,7 @@ class AiRequestParserService
         return null;
     }
 
-    /**
-     * @return array<int, string>
-     */
+    /** @return array<int, string> */
     private function extractKeywords(string $query): array
     {
         $stopWords = ['a', 'an', 'the', 'with', 'for', 'and', 'or', 'under', 'me', 'i', 'want', 'need', 'looking'];
@@ -333,3 +317,4 @@ class AiRequestParserService
         return 'en';
     }
 }
+
